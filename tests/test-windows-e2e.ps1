@@ -1,0 +1,50 @@
+#requires -Version 5.1
+
+[CmdletBinding()]
+param()
+
+$ErrorActionPreference = 'Stop'
+$repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$skillRoot = Join-Path $repoRoot 'plugins\cell-ppt\skills\cell-ppt'
+$fixture = Join-Path $PSScriptRoot 'fixtures\visibility.svg'
+$manifest = Join-Path $PSScriptRoot 'fixtures\text-manifest.json'
+$tempBase = Join-Path $repoRoot '.test-tmp'
+$tempRoot = Join-Path $tempBase ([Guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+
+try {
+    $master = Join-Path $tempRoot 'master.svg'
+    py -3 -X utf8 (Join-Path $skillRoot 'scripts\merge_live_text.py') --input-svg $fixture --text-manifest $manifest --output-svg $master | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Live text merge failed.' }
+    py -3 -X utf8 (Join-Path $skillRoot 'scripts\validate_vector_svg.py') --svg $master | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Master SVG validation failed.' }
+
+    $cacheRoot = Join-Path $tempRoot 'cache'
+    py -3 -X utf8 (Join-Path $skillRoot 'scripts\prepare_geometry_cache.py') --input $master --output-dir $cacheRoot --job-id windows-e2e | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Geometry cache creation failed.' }
+    py -3 -X utf8 (Join-Path $skillRoot 'scripts\cull_hidden_geometry.py') --cache (Join-Path $cacheRoot 'geometry-cache.json') --state (Join-Path $cacheRoot 'playback.json') | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Visibility culling failed.' }
+
+    $cache = Get-Content -LiteralPath (Join-Path $cacheRoot 'geometry-cache.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ([int]$cache.source_total_playback_paths -le [int]$cache.total_atoms) { throw 'Fixture did not cull hidden or duplicate playback paths.' }
+    if ([int]$cache.culled_atom_count -lt 2) { throw 'Expected hidden and duplicate paths were not culled.' }
+    if (($cache.atoms | Where-Object { $_.kind -ne 'text' -and $_.subpaths.Count -ne 1 }).Count -ne 0) { throw 'Playback units were not normalized to one subpath.' }
+    if (($cache.atoms | Where-Object { $_.kind -eq 'text' -and $_.text.contents -eq 'Cell_ppt' }).Count -ne 1) { throw 'Editable text was not preserved.' }
+    if (($cache.batches | Where-Object { $_.atomic_count -gt 50 }).Count -ne 0) { throw 'Batch size exceeded 50.' }
+
+    $runtimeText = Get-Content -LiteralPath (Join-Path $skillRoot 'scripts\run_cell_ppt.ps1') -Raw -Encoding UTF8
+    foreach ($contract in @('$application = $hostInfo.Application', '$shape.ZOrder(0)', 'Show-ObjectStep', '$UseActivePresentation')) {
+        if ($runtimeText -notlike "*$contract*") { throw "PowerPoint runtime contract is missing: $contract" }
+    }
+    $fromSvgText = Get-Content -LiteralPath (Join-Path $skillRoot 'scripts\run_from_svg.ps1') -Raw -Encoding UTF8
+    if ($fromSvgText -notmatch 'StepDelayMs = 80' -or $fromSvgText -notmatch 'cull_hidden_geometry.py') { throw 'SVG wrapper does not enforce frozen playback defaults.' }
+}
+finally {
+    if (Test-Path -LiteralPath $tempBase) {
+        $checked = [IO.Path]::GetFullPath($tempBase)
+        if (-not $checked.StartsWith($repoRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Refusing to remove a directory outside the project.' }
+        Remove-Item -LiteralPath $checked -Recurse -Force
+    }
+}
+
+Write-Output 'WINDOWS_E2E_OK|cache=single-parse|visibility=culled|text=editable|batch=20-50|delay_ms=80'

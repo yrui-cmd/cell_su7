@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "product": "Cell_ppt",
+  "version": "0.1.0",
+  "tag": "v0.1.0",
+  "files": {
+    "requirements.lock": "7e32d739ce3eb3efafffc0408877ee57feb3561aab137a97990719ac5a5b08d5",
+    "runtime-lock.json": "5184de20568570b0baafb3c55788289648b9beda9b9afd5d16ac74dfa6565f74",
+    "plugins/cell-ppt/.codex-plugin/plugin.json": "b35fd30bd343d6f05dec093564c00b82df45d35a1f3f015e9d299ded4f02b85d",
+    "plugins/cell-ppt/skills/cell-ppt/SKILL.md": "c643a3c3474bc036e9e68bdbcaf891f1f488c1d64d539eb7414dc202159217f8",
+    "plugins/cell-ppt/skills/cell-ppt/references/workflow.md": "1b86fc1e3876009408f70986b39debbf7b742bc17f3d8fd4849d2fdc577fd811",
+    "plugins/cell-ppt/skills/cell-ppt/references/backends.md": "e80f997e7778774ba97c98dea83562271e11e9578f6a4994f654ecab52e76f9c",
+    "plugins/cell-ppt/skills/cell-ppt/scripts/prepare_geometry_cache.py": "bc567ffd515bd83e96c54abf2734eab560da4bd2fc3f0bc54c6d514c952703f9",
+    "plugins/cell-ppt/skills/cell-ppt/scripts/cull_hidden_geometry.py": "3db52900012021a313788c7b76b543920b69a34beb0fd13f1574838549a613e6",
+    "plugins/cell-ppt/skills/cell-ppt/scripts/merge_live_text.py": "c8983b57fbcd9b62947e1974c08c6c050f9799284ce08ad1eec0f6ae5e2eb4d8",
+    "plugins/cell-ppt/skills/cell-ppt/scripts/run_cell_ppt.ps1": "ae94a9eca4d560c926131b377a50cb9335ed5261606010fc5e1e3fc9b33ce1e8",
+    "plugins/cell-ppt/skills/cell-ppt/scripts/run_from_svg.ps1": "a1f1a56ff2b2b08b8f14efd354f25ab4f3fbc2b81525f64d701736edccd030f2",
+    "plugins/cell-ppt/skills/cell-ppt/scripts/run_from_image.ps1": "a942aa939f2c84a1fbadda256a6fc9889918bc35be4ba4addc5a3ef629164a57",
+    "plugins/cell-ppt/skills/cell-ppt/scripts/set-xiaomiao-key.ps1": "1ad61692a6877906485f08c601ccbc8893160b18f27fae1a626b0328641632ef",
+    "plugins/cell-ppt/skills/cell-ppt/scripts/vectorize-xiaomiao.ps1": "694bc25e2de15191e34469c1dcc9d2323fa8567b6195f4e075afaf8ba4b5b358",
+    "plugins/cell-ppt/skills/cell-ppt/scripts/xiaomiao.ps1": "cd0af66474f0299e8dfbd00c889149fb9b59e990b905cf84a354adf16a0d76d1"
+  }
+}

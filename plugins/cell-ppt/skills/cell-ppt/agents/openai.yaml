@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cell_ppt"
+  short_description: "Rebuild scientific figures as editable PowerPoint objects"
+  default_prompt: "Use Cell_ppt to reconstruct my reference as editable native objects in the current PowerPoint slide."

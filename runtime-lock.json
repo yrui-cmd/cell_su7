@@ -1,0 +1,37 @@
+{
+  "release": "0.1.0",
+  "gitTag": "v0.1.0",
+  "platform": {
+    "os": "Windows 10 or 11 x64",
+    "powershell": ">=5.1",
+    "python": ">=3.11,<3.15",
+    "powerPoint": "16.x desktop COM",
+    "powerPointProgId": "PowerPoint.Application",
+    "wps": "experimental"
+  },
+  "pythonDependencies": {
+    "python-pptx": "1.0.2",
+    "fonttools": "4.61.1",
+    "shapely": "2.1.2"
+  },
+  "codex": {
+    "requiresDesktopApp": true,
+    "requiresBuiltInImage2": true,
+    "skillId": "cell-ppt"
+  },
+  "runtimeContracts": {
+    "geometryCacheSchema": 3,
+    "textManifestSchema": "1.0",
+    "ordinaryBatchMin": 20,
+    "ordinaryBatchMax": 50,
+    "presentationConnections": 1,
+    "defaultStepDelayMs": 80,
+    "playbackOrder": "source-paint-order-back-to-front",
+    "preexistingObjects": "preserve"
+  },
+  "credentials": {
+    "input": "stdin-from-codex",
+    "storage": "Windows DPAPI",
+    "includedInPackage": false
+  }
+}
