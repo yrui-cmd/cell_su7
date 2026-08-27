@@ -22,13 +22,13 @@ try {
     $cacheRoot = Join-Path $tempRoot 'cache'
     py -3 -X utf8 (Join-Path $skillRoot 'scripts\prepare_geometry_cache.py') --input $master --output-dir $cacheRoot --job-id windows-e2e | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Geometry cache creation failed.' }
-    py -3 -X utf8 (Join-Path $skillRoot 'scripts\cull_hidden_geometry.py') --cache (Join-Path $cacheRoot 'geometry-cache.json') --state (Join-Path $cacheRoot 'playback.json') | Out-Null
+    py -3 -X utf8 (Join-Path $skillRoot 'scripts\cull_hidden_geometry.py') --cache (Join-Path $cacheRoot 'geometry-cache.json') --state (Join-Path $cacheRoot 'drawing-state.json') | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Visibility culling failed.' }
 
     $cache = Get-Content -LiteralPath (Join-Path $cacheRoot 'geometry-cache.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ([int]$cache.source_total_playback_paths -le [int]$cache.total_atoms) { throw 'Fixture did not cull hidden or duplicate playback paths.' }
+    if ([int]$cache.source_total_drawing_paths -le [int]$cache.total_atoms) { throw 'Fixture did not cull hidden or duplicate drawing paths.' }
     if ([int]$cache.culled_atom_count -lt 2) { throw 'Expected hidden and duplicate paths were not culled.' }
-    if (($cache.atoms | Where-Object { $_.kind -ne 'text' -and $_.subpaths.Count -ne 1 }).Count -ne 0) { throw 'Playback units were not normalized to one subpath.' }
+    if (($cache.atoms | Where-Object { $_.kind -ne 'text' -and $_.subpaths.Count -ne 1 }).Count -ne 0) { throw 'Drawing units were not normalized to one subpath.' }
     if (($cache.atoms | Where-Object { $_.kind -eq 'text' -and $_.text.contents -eq 'Cell_ppt' }).Count -ne 1) { throw 'Editable text was not preserved.' }
     if (($cache.batches | Where-Object { $_.atomic_count -gt 50 }).Count -ne 0) { throw 'Batch size exceeded 50.' }
 
@@ -37,7 +37,7 @@ try {
         if ($runtimeText -notlike "*$contract*") { throw "PowerPoint runtime contract is missing: $contract" }
     }
     $fromSvgText = Get-Content -LiteralPath (Join-Path $skillRoot 'scripts\run_from_svg.ps1') -Raw -Encoding UTF8
-    if ($fromSvgText -notmatch 'StepDelayMs = 80' -or $fromSvgText -notmatch 'cull_hidden_geometry.py') { throw 'SVG wrapper does not enforce frozen playback defaults.' }
+    if ($fromSvgText -notmatch 'StepDelayMs = 80' -or $fromSvgText -notmatch 'cull_hidden_geometry.py') { throw 'SVG wrapper does not enforce frozen drawing defaults.' }
 }
 finally {
     if (Test-Path -LiteralPath $tempBase) {

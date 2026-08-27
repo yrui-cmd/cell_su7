@@ -2,7 +2,7 @@
 
 ## Microsoft PowerPoint
 
-Use `PowerPoint.Application`. Keep one COM application object and one presentation reference for the entire playback. `Shapes.BuildFreeform` creates native editable curves; `Shapes.AddTextbox` creates live text. This is the preferred Windows backend.
+Use `PowerPoint.Application`. Keep one COM application object and one presentation reference for the entire drawing job. `Shapes.BuildFreeform` creates native editable curves; `Shapes.AddTextbox` creates live text. This is the preferred Windows backend.
 
 ## WPS Presentation
 

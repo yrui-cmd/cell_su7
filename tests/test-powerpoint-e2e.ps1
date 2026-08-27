@@ -17,7 +17,7 @@ $presentation = $null
 try {
     $cacheRoot = Join-Path $tempRoot 'cache'
     py -3 -X utf8 (Join-Path $skillRoot 'scripts\prepare_geometry_cache.py') --input (Join-Path $PSScriptRoot 'fixtures\visibility.svg') --output-dir $cacheRoot --job-id powerpoint-e2e | Out-Null
-    py -3 -X utf8 (Join-Path $skillRoot 'scripts\cull_hidden_geometry.py') --cache (Join-Path $cacheRoot 'geometry-cache.json') --state (Join-Path $cacheRoot 'playback.json') | Out-Null
+    py -3 -X utf8 (Join-Path $skillRoot 'scripts\cull_hidden_geometry.py') --cache (Join-Path $cacheRoot 'geometry-cache.json') --state (Join-Path $cacheRoot 'drawing-state.json') | Out-Null
 
     $application = New-Object -ComObject PowerPoint.Application
     $application.Visible = -1

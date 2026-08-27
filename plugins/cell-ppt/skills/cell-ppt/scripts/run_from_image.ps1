@@ -67,7 +67,7 @@ if ($ApproveHighCost) { $vectorizerArgs.ApproveHighCost = $true }
 if ($LASTEXITCODE -ne 0) { throw 'Editable text merge failed.' }
 & py -3 -X utf8 $cacheBuilder --input $masterSvg --output-dir $cacheRoot --job-id $baseName | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Geometry cache preparation failed.' }
-& py -3 -X utf8 $visibilityCuller --cache (Join-Path $cacheRoot 'geometry-cache.json') --state (Join-Path $cacheRoot 'playback.json') | Out-Null
+& py -3 -X utf8 $visibilityCuller --cache (Join-Path $cacheRoot 'geometry-cache.json') --state (Join-Path $cacheRoot 'drawing-state.json') | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Visible-path culling failed.' }
 
 $runtimeArgs = @{

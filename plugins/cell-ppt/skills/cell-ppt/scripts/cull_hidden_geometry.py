@@ -17,7 +17,7 @@ from shapely.ops import unary_union
 import prepare_geometry_cache as cache_builder
 
 
-def expand_playback_paths(atoms):
+def expand_drawing_paths(atoms):
     """Make the culling unit identical to the native shape shown in PowerPoint."""
     expanded = []
     for atom in atoms:
@@ -162,7 +162,7 @@ def main():
     cache = json.loads(cache_path.read_text(encoding="utf-8-sig"))
     state = json.loads(state_path.read_text(encoding="utf-8-sig"))
     source_atoms = cache.get("atoms", [])
-    atoms = expand_playback_paths(source_atoms)
+    atoms = expand_drawing_paths(source_atoms)
     keep = [True] * len(atoms)
     coverage = None
     seen = set()
@@ -206,7 +206,7 @@ def main():
         int(cache["complex_point_threshold"]),
     )
     cache["source_total_atoms"] = len(source_atoms)
-    cache["source_total_playback_paths"] = len(atoms)
+    cache["source_total_drawing_paths"] = len(atoms)
     cache["culled_atom_count"] = len(atoms) - len(kept_atoms)
     cache["culled_atoms"] = sorted(culled, key=lambda item: item["position"])
     cache["atoms"] = kept_atoms
@@ -235,7 +235,7 @@ def main():
     print(json.dumps({
         "ok": True,
         "source_atoms": len(source_atoms),
-        "source_playback_paths": len(atoms),
+        "source_drawing_paths": len(atoms),
         "kept_atoms": len(kept_atoms),
         "culled_atoms": len(atoms) - len(kept_atoms),
     }, ensure_ascii=False))

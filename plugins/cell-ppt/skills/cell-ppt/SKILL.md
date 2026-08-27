@@ -7,7 +7,7 @@ description: Reconstruct PNG, JPEG, WebP, SVG, scientific figures, mechanism dia
 
 Use this fixed workflow:
 
-`text manifest -> Image 2 text-only cleanup -> API vector SVG -> live text merge -> one geometry cache -> native PPTX playback`
+`text manifest -> Image 2 text-only cleanup -> API vector SVG -> live text merge -> one geometry cache -> native PowerPoint drawing`
 
 Read [references/workflow.md](references/workflow.md) before image reconstruction. Read [references/backends.md](references/backends.md) before selecting PowerPoint or WPS.
 
@@ -34,25 +34,25 @@ Read [references/workflow.md](references/workflow.md) before image reconstructio
 - Use the next `shibielujingN` basename allocated by the bundled scripts.
 - Do not replace a requested fresh API result with local tracing or an old SVG.
 
-## Fixed playback rules
+## Fixed drawing rules
 
-Treat this section as the finalized playback baseline. Do not reinterpret, relax, or override it unless the user explicitly asks to update `Cell_ppt` itself.
+Treat this section as the finalized drawing baseline. Do not reinterpret, relax, or override it unless the user explicitly asks to update `Cell_ppt` itself.
 
 - Convert every path retained by the visibility culler to a native editable PowerPoint object. Use WPS only as an explicitly experimental backend.
-- Sole visibility rule: 最终不可见、被后续不透明对象完全覆盖、或与后续路径重复的对象不进入播放缓存；部分可见的路径仍保留。
-- Apply that rule to actual playback paths, including separate subpaths inside one source SVG element. It overrides any generic instruction to preserve all source paths.
-- Put each retained playback path into the cache exactly once. Never replay a duplicate copy or a temporary covering layer.
+- Sole visibility rule: 最终不可见、被后续不透明对象完全覆盖、或与后续路径重复的对象不进入绘图缓存；部分可见的路径仍保留。
+- Apply that rule to actual drawing paths, including separate subpaths inside one source SVG element. It overrides any generic instruction to preserve all source paths.
+- Put each retained drawing path into the cache exactly once. Draw it exactly once; never create a duplicate copy or a temporary covering layer.
 - Convert paths to editable freeform Bézier shapes, text to text boxes, and preserve paint order.
 - Traverse the Master SVG in its literal paint order from the first atom to the last: the first atom is the backmost object and must appear first. Explicitly bring each newly committed object in front of the earlier job objects.
 - Never reorder by semantic categories such as background, large fill, outline, internal structure, detail, highlight, or text.
 - Keep repeated elements independent. Do not flatten the whole figure into one picture.
 - Keep one presentation automation connection for the full job.
 - Draw into the currently active slide by default. Create a separate presentation only when the user explicitly requests it.
-- Bring PowerPoint/WPS forward once at playback start, then keep the same window and slide for the whole drawing.
+- Bring PowerPoint/WPS forward once when drawing starts, then keep the same window and slide for the whole drawing.
 - Commit and display each native freeform path or text box immediately after it is created. Apply the configured delay after every individual object, not after a batch or source atom.
 - Parse the SVG exactly once and process ordinary atoms in cached batches of 20–50.
 - Never delete, hide, replace, close, rename, or move objects that existed on the slide before the current job. This protection does not retain redundant paths from the new drawing. Never clear the slide before or after drawing.
-- Do not preload, hide, reveal, swap, or replace a completed figure. After culling, keep each retained playback object in place; do not clear it after presentation.
+- Do not preload, hide, reveal, swap, or replace a completed figure. After culling, keep each retained drawing object in place; do not clear it after drawing.
 - Save one editable `.pptx`. Export PDF or PNG only when requested.
 
 ## Host selection
@@ -64,4 +64,4 @@ Treat this section as the finalized playback baseline. Do not reinterpret, relax
 
 ## Completion gate
 
-Do not report success until the Master SVG has no raster node, the sole visibility rule has been applied at playback-path level, text is editable, retained paths are native freeforms, object order is correct, the PPTX reopens, and pre-existing content remains unchanged.
+Do not report success until the Master SVG has no raster node, the sole visibility rule has been applied at drawing-path level, text is editable, retained paths are native freeforms, object order is correct, the PPTX reopens, and pre-existing content remains unchanged.

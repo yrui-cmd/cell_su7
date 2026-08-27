@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Parse one Cell_ppt SVG once and prepare resumable cached playback batches."""
+"""Parse one Cell_ppt SVG once and prepare resumable cached drawing batches."""
 
 from __future__ import annotations
 
@@ -195,7 +195,7 @@ def validate_tree(root: ET.Element) -> None:
             if "url(" in lowered or (attr.endswith("href") and attr_value):
                 raise ValueError(f"Unsupported linked paint or resource on {element.get('id', name)}")
             if attr == "vector-effect" and attr_value not in {"", "none", "non-scaling-stroke"}:
-                raise ValueError("Unsupported vector-effect; expand it before cached playback")
+                raise ValueError("Unsupported vector-effect; expand it before cached drawing")
 
 
 def element_path_data(element: ET.Element) -> str:
@@ -356,7 +356,7 @@ def opacity_value(value: str | None, default: float = 1.0) -> float:
 def paint_parts(presentation: dict[str, str], accumulated_opacity: float, stroke_scale: float) -> list[dict]:
     dash = presentation.get("stroke-dasharray", "none").strip().lower()
     if dash not in {"", "none"}:
-        raise ValueError("Dashed strokes must be expanded to solid paths before cached playback")
+        raise ValueError("Dashed strokes must be expanded to solid paths before cached drawing")
     current_color = presentation.get("color", "black")
     fill_color, fill_alpha = parse_color(presentation.get("fill", "black"), current_color)
     stroke_color, stroke_alpha = parse_color(presentation.get("stroke", "none"), current_color)
@@ -553,13 +553,13 @@ def build_batches(atoms: list[dict], job_id: str, min_size: int, max_size: int, 
                 )
 
         if scores[total_atoms] is None:
-            raise ValueError("Could not partition SVG atoms into the required 20-50 playback batches")
+            raise ValueError("Could not partition SVG atoms into the required 20-50 drawing batches")
         reversed_plan: list[tuple[str, list[int]]] = []
         end = total_atoms
         while end > 0:
             step = previous[end]
             if step is None:
-                raise ValueError("Incomplete playback batch plan")
+                raise ValueError("Incomplete drawing batch plan")
             start, kind = step
             reversed_plan.append((kind, list(range(start, end))))
             end = start
@@ -584,7 +584,7 @@ def validate_batch_contract(batches: list[dict], atoms: list[dict], min_size: in
     total_atoms = len(atoms)
     if total_atoms < min_size:
         if len(batches) != 1 or batches[0]["kind"] != "normal" or batches[0]["atomic_count"] != total_atoms:
-            raise ValueError("A sub-minimum whole job must remain one ordinary playback batch")
+            raise ValueError("A sub-minimum whole job must remain one ordinary drawing batch")
         return
     for batch in batches:
         count = int(batch["atomic_count"])
@@ -607,11 +607,11 @@ def prepare(input_svg: Path, output_dir: Path, job_id: str, min_size: int, max_s
     job_id = safe_job_id(job_id)
     source_hash = sha256_file(input_svg)
     cache_path = output_dir / "geometry-cache.json"
-    state_path = output_dir / "playback.json"
+    state_path = output_dir / "drawing-state.json"
 
     if cache_path.exists() or state_path.exists():
         if not cache_path.exists() or not state_path.exists():
-            raise ValueError("Cached playback state is incomplete; use a new work directory")
+            raise ValueError("Cached drawing state is incomplete; use a new work directory")
         cache = json.loads(cache_path.read_text(encoding="utf-8-sig"))
         state = json.loads(state_path.read_text(encoding="utf-8-sig"))
         compatible = (
@@ -710,7 +710,7 @@ def main() -> int:
     completed = sum(1 for item in state["batches"] if item.get("completed"))
     print(
         f"OK|cache={Path(args.output_dir).resolve() / 'geometry-cache.json'}|"
-        f"state={Path(args.output_dir).resolve() / 'playback.json'}|"
+        f"state={Path(args.output_dir).resolve() / 'drawing-state.json'}|"
         f"atoms={cache['total_atoms']}|batches={len(cache['batches'])}|completed={completed}"
     )
     return 0

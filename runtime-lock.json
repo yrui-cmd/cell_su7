@@ -26,7 +26,7 @@
     "ordinaryBatchMax": 50,
     "presentationConnections": 1,
     "defaultStepDelayMs": 80,
-    "playbackOrder": "source-paint-order-back-to-front",
+    "drawingOrder": "source-paint-order-back-to-front",
     "preexistingObjects": "preserve"
   },
   "credentials": {

@@ -16,11 +16,11 @@ Keep the API key only in Windows DPAPI storage. Never place it in the project, c
 
 Send the complete text-cleaned reference through the bundled vector API adapter. Reject incomplete SVG, raster wrappers, gradients, masks, unsupported linked resources, and clipping structures that cannot be represented faithfully. Merge the recorded text back as real SVG `<text>` elements before geometry caching.
 
-## PPTX playback
+## PowerPoint drawing
 
-Validate the SVG and run `prepare_geometry_cache.py` once. Before playback, run `cull_hidden_geometry.py` at actual playback-path level, including separate subpaths inside one source SVG element. The sole rule is: 最终不可见、被后续不透明对象完全覆盖、或与后续路径重复的对象不进入播放缓存；部分可见的路径仍保留。 This rule overrides any generic instruction to preserve all source paths. Pass the reduced `geometry-cache.json` to `run_cell_ppt.ps1`. Map the SVG viewBox proportionally into the slide, create retained paths in source paint order, and save the presentation as standard OOXML `.pptx`.
+Validate the SVG and run `prepare_geometry_cache.py` once. Before drawing, run `cull_hidden_geometry.py` at actual drawing-path level, including separate subpaths inside one source SVG element. The sole rule is: 最终不可见、被后续不透明对象完全覆盖、或与后续路径重复的对象不进入绘图缓存；部分可见的路径仍保留。 This rule overrides any generic instruction to preserve all source paths. Pass the reduced `geometry-cache.json` to `run_cell_ppt.ps1`. Map the SVG viewBox proportionally into the slide, draw retained paths in source paint order, and save the presentation as standard OOXML `.pptx`.
 
-This is the finalized visibility contract: one retained playback path produces one native object once. Never add a temporary duplicate, later covering copy, hidden preload, or replacement layer.
+This is the finalized visibility contract: one retained drawing path produces one native object once. Never add a temporary duplicate, later covering copy, hidden preload, or replacement layer.
 
 For a full image job, call `run_from_image.ps1`. For an existing SVG, call `run_from_svg.ps1`. Both wrappers draw into the active slide and bring the presentation forward once by default. Use `-CreateNewPresentation` only when the user explicitly asks for a separate deck, and `-KeepBackground` only when the user explicitly does not want the presentation brought forward.
 
