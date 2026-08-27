@@ -1,10 +1,10 @@
 # Cell_ppt
 
-Cell_ppt `v0.1.0` 是面向 Windows、Codex Desktop 与 Microsoft PowerPoint 的稳定版科研矢量绘图插件。它将参考图重建为可编辑路径和原生文本框，并续画到用户已经打开的 PowerPoint 幻灯片中。
+Cell_ppt `v0.1.1` 是面向 Windows、Codex Desktop 与 Microsoft PowerPoint 的稳定版科研矢量绘图插件。它将参考图重建为可编辑路径和原生文本框，并续画到用户已经打开的 PowerPoint 幻灯片中。
 
 ## 稳定版保证
 
-- 固定源码版本：Git Tag `v0.1.0`。
+- 固定源码版本：Git Tag `v0.1.1`。
 - 固定 Python 依赖：`requirements.lock`。
 - 固定运行契约：`runtime-lock.json`。
 - 一键安装与诊断：`setup.ps1`、`doctor.ps1`。
@@ -22,12 +22,12 @@ Cell_ppt `v0.1.0` 是面向 Windows、Codex Desktop 与 Microsoft PowerPoint 的
 - PowerShell 5.1 或更高版本
 - Python 3.11–3.14
 
-WPS Presentation 保留实验性兼容入口，但不属于 `v0.1.0` 稳定承诺。
+WPS Presentation 保留实验性兼容入口，但不属于 `v0.1.1` 稳定承诺。
 
 ## 从固定 Tag 一键安装
 
 ```powershell
-git clone --branch v0.1.0 --depth 1 https://github.com/yrui-cmd/cell-ppt.git
+git clone --branch v0.1.1 --depth 1 https://github.com/yrui-cmd/cell-ppt.git
 Set-Location .\cell-ppt
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
@@ -50,18 +50,18 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1 -Force
 
 下载同一版本的两个文件：
 
-- `cell-ppt-v0.1.0.zip`
-- `cell-ppt-v0.1.0.zip.sha256`
+- `cell-ppt-v0.1.1.zip`
+- `cell-ppt-v0.1.1.zip.sha256`
 
 验证后解压并运行 `setup.ps1`：
 
 ```powershell
-$zip = '.\cell-ppt-v0.1.0.zip'
+$zip = '.\cell-ppt-v0.1.1.zip'
 $expected = ((Get-Content "$zip.sha256") -split '\s+')[0]
 $actual = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
 if ($actual -ne $expected) { throw 'SHA256 校验失败，停止安装。' }
-Expand-Archive $zip -DestinationPath .\cell-ppt-v0.1.0
-Set-Location .\cell-ppt-v0.1.0\cell-ppt-v0.1.0
+Expand-Archive $zip -DestinationPath .\cell-ppt-v0.1.1
+Set-Location .\cell-ppt-v0.1.1\cell-ppt-v0.1.1
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 

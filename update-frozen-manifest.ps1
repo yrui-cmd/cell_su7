@@ -30,18 +30,18 @@ foreach ($relative in $tracked) {
     if (-not (Test-Path -LiteralPath $absolute -PathType Leaf)) { throw "Frozen file is missing: $relative" }
     $files[$relative] = (Get-FileHash -LiteralPath $absolute -Algorithm SHA256).Hash.ToLowerInvariant()
 }
-$expected = [ordered]@{ schemaVersion = '1.0'; product = 'Cell_ppt'; version = '0.1.0'; tag = 'v0.1.0'; files = $files }
+$expected = [ordered]@{ schemaVersion = '1.0'; product = 'Cell_ppt'; version = '0.1.1'; tag = 'v0.1.1'; files = $files }
 
 if ($Verify) {
     if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) { throw 'FROZEN-MANIFEST.json is missing.' }
     $actual = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ($actual.schemaVersion -ne '1.0' -or $actual.product -ne 'Cell_ppt' -or $actual.version -ne '0.1.0' -or $actual.tag -ne 'v0.1.0') { throw 'Frozen manifest identity is invalid.' }
+    if ($actual.schemaVersion -ne '1.0' -or $actual.product -ne 'Cell_ppt' -or $actual.version -ne '0.1.1' -or $actual.tag -ne 'v0.1.1') { throw 'Frozen manifest identity is invalid.' }
     foreach ($relative in $tracked) {
         if ([string]$actual.files.$relative -ne [string]$files[$relative]) { throw "Frozen hash mismatch: $relative" }
     }
-    Write-Output "FROZEN_OK|files=$($tracked.Count)|version=0.1.0"
+    Write-Output "FROZEN_OK|files=$($tracked.Count)|version=0.1.1"
     exit 0
 }
 
 $expected | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
-Write-Output "FROZEN_UPDATED|files=$($tracked.Count)|version=0.1.0"
+Write-Output "FROZEN_UPDATED|files=$($tracked.Count)|version=0.1.1"

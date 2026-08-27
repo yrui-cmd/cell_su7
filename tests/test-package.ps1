@@ -24,12 +24,12 @@ foreach ($relative in $required) {
 }
 
 $plugin = Get-Content -LiteralPath (Join-Path $pluginRoot '.codex-plugin\plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-if ($plugin.name -ne 'cell-ppt' -or $plugin.version -ne '0.1.0' -or $plugin.skills -ne './skills/' -or $plugin.license -ne 'MIT') { throw 'Plugin identity is invalid.' }
+if ($plugin.name -ne 'cell-ppt' -or $plugin.version -ne '0.1.1' -or $plugin.skills -ne './skills/' -or $plugin.license -ne 'MIT') { throw 'Plugin identity is invalid.' }
 if ($plugin.interface.displayName -ne 'Cell_ppt' -or $plugin.author.name -ne 'yrui-cmd') { throw 'Plugin display identity is invalid.' }
 if (Test-Path -LiteralPath (Join-Path $repoRoot '.agents\plugins\marketplace.json')) { throw 'Marketplace metadata must not be included.' }
 
 $runtime = Get-Content -LiteralPath (Join-Path $repoRoot 'runtime-lock.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-if ($runtime.release -ne '0.1.0' -or $runtime.gitTag -ne 'v0.1.0' -or $runtime.codex.skillId -ne 'cell-ppt') { throw 'Runtime lock identity is invalid.' }
+if ($runtime.release -ne '0.1.1' -or $runtime.gitTag -ne 'v0.1.1' -or $runtime.codex.skillId -ne 'cell-ppt') { throw 'Runtime lock identity is invalid.' }
 $expectedRequirements = "python-pptx==1.0.2`nfonttools==4.61.1`nshapely==2.1.2"
 $actualRequirements = (Get-Content -LiteralPath (Join-Path $repoRoot 'requirements.lock') -Raw -Encoding UTF8).Trim() -replace "`r`n", "`n"
 if ($actualRequirements -ne $expectedRequirements) { throw 'Python dependencies are not exactly locked.' }
@@ -109,4 +109,4 @@ finally {
     }
 }
 
-Write-Output 'PACKAGE_OK|skill=cell-ppt|version=0.1.0|secret_scan=clean|install=copy|credential=stdin-dpapi|marketplace=absent'
+Write-Output 'PACKAGE_OK|skill=cell-ppt|version=0.1.1|secret_scan=clean|install=copy|credential=stdin-dpapi|marketplace=absent'

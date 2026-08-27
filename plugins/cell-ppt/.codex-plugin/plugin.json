@@ -1,7 +1,7 @@
 {
   "name": "cell-ppt",
-  "version": "0.1.0",
-  "description": "Reconstruct scientific figures as editable native PowerPoint objects with live text and ordered path playback.",
+  "version": "0.1.1",
+  "description": "Draw reconstructed scientific figures as editable native PowerPoint objects with live text.",
   "author": {
     "name": "yrui-cmd",
     "url": "https://github.com/yrui-cmd"
@@ -14,7 +14,7 @@
   "interface": {
     "displayName": "Cell_ppt",
     "shortDescription": "Editable scientific figures for PowerPoint.",
-    "longDescription": "Cell_ppt reconstructs scientific reference images and SVG files as editable native PowerPoint paths and live text, with deterministic bottom-to-top playback and existing-slide protection. WPS support is experimental.",
+    "longDescription": "Cell_ppt draws scientific reference images and SVG files as editable native PowerPoint paths and live text from bottom to top while protecting existing slide content. WPS support is experimental.",
     "developerName": "yrui-cmd",
     "category": "Productivity",
     "capabilities": ["Interactive", "Write"],

@@ -1,10 +1,10 @@
 # Cell_ppt
 
-Cell_ppt `v0.1.0` is a Windows Codex skill and plugin that draws reconstructed scientific figures as editable native Microsoft PowerPoint paths and live text. It draws retained paths from back to front while preserving objects already present on the active slide.
+Cell_ppt `v0.1.1` is a Windows Codex skill and plugin that draws reconstructed scientific figures as editable native Microsoft PowerPoint paths and live text. It draws retained paths from back to front while preserving objects already present on the active slide.
 
 ## Stable contract
 
-- Install from immutable Git tag `v0.1.0` or the matching release ZIP and SHA256 file.
+- Install from immutable Git tag `v0.1.1` or the matching release ZIP and SHA256 file.
 - Use exact Python dependencies and verify the frozen runtime manifest.
 - Support Microsoft PowerPoint 16.x on Windows as the stable backend; WPS is experimental.
 - Parse the SVG once, cull fully hidden and duplicate drawing paths, retain partially visible paths, and draw each retained object exactly once.
@@ -14,7 +14,7 @@ Cell_ppt `v0.1.0` is a Windows Codex skill and plugin that draws reconstructed s
 ## Install
 
 ```powershell
-git clone --branch v0.1.0 --depth 1 https://github.com/yrui-cmd/cell-ppt.git
+git clone --branch v0.1.1 --depth 1 https://github.com/yrui-cmd/cell-ppt.git
 Set-Location .\cell-ppt
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
