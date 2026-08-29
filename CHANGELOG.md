@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 - Unreleased
+
+- Use one reconstruction, text, SVG parsing, culling, cache, batching, and native-object contract on Windows and macOS.
+- Keep live PowerPoint COM drawing on Windows and add native editable OOXML output for saved PPTX files on macOS.
+- Add macOS Keychain credential storage, cross-platform installation, and diagnostics.
+- Move stable runtime values into `platform-contract.json`; remove frozen manifests and fixed-tag installation requirements.
+- Allow a user-supplied chat API key to be configured automatically through stdin without echoing it.
+- Add install-time OS, Python, PowerPoint/WPS, credential, and backend matching with a non-secret runtime profile.
+- Add automatic dependency installation and native editable OOXML fallback when live presentation automation is unavailable.
+
 ## 0.1.1 - 2026-08-27
 
 - Describe the product consistently as live PowerPoint drawing rather than path presentation.

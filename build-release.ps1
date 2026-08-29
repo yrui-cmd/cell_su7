@@ -2,16 +2,16 @@
 
 [CmdletBinding()]
 param(
-    [string]$Version = '0.1.1',
+    [string]$Version,
     [switch]$SkipTests
 )
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
 $manifest = Get-Content -LiteralPath (Join-Path $repoRoot 'plugins\cell-ppt\.codex-plugin\plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = [string]$manifest.version }
 if ($manifest.version -ne $Version) { throw "Plugin version $($manifest.version) does not match release $Version." }
 if (Test-Path -LiteralPath (Join-Path $repoRoot '.agents\plugins\marketplace.json')) { throw 'Marketplace metadata is forbidden in this release.' }
-& (Join-Path $repoRoot 'update-frozen-manifest.ps1') -Verify
 
 if (-not $SkipTests) {
     & (Join-Path $repoRoot 'tests\test-package.ps1')
@@ -50,7 +50,7 @@ $releaseManifest = [ordered]@{
     credentialsIncluded = $false
     dependencyLock = 'requirements.lock'
     runtimeLock = 'runtime-lock.json'
-    frozenManifest = 'FROZEN-MANIFEST.json'
+    platformContract = 'plugins/cell-ppt/skills/cell-ppt/references/platform-contract.json'
 }
 $releaseManifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $stageRoot 'RELEASE-MANIFEST.json') -Encoding UTF8
 

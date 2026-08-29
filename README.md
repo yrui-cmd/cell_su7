@@ -1,110 +1,119 @@
 # Cell_ppt
 
-Cell_ppt `v0.1.1` 是面向 Windows、Codex Desktop 与 Microsoft PowerPoint 的稳定版科研矢量绘图插件。它将参考图重建为可编辑路径和原生文本框，并续画到用户已经打开的 PowerPoint 幻灯片中。
+Cell_ppt 支持 Windows 与 macOS，并保持同一套核心流程：
 
-## 稳定版保证
+`文字清单 → Image 2 仅清文字 → 小描路径返回 SVG → 合并可编辑文字 → 单次解析 → 清除重复路径 → 按源顺序从底层到顶层绘制 → 原生可编辑 PPTX`
 
-- 固定源码版本：Git Tag `v0.1.1`。
-- 固定 Python 依赖：`requirements.lock`。
-- 固定运行契约：`runtime-lock.json`。
-- 一键安装与诊断：`setup.ps1`、`doctor.ps1`。
-- Windows 自动端到端测试，另提供 PowerPoint 人工触发真机测试。
-- Release ZIP 配套独立 SHA256 文件。
-- 不提供 Marketplace 安装入口；从固定 Tag 或 Release ZIP 安装。
-- API Key 不随项目分发，只通过当前 Windows 账户的 DPAPI 加密保存。
-- 单张图片预计消耗超过 1 额度时，必须在上传 API 前取得用户确认；拒绝时不上传。确认后处理与下载不再重复询问。
+平台只在最后一步不同：
 
-## 环境要求
+- Windows 10/11：支持 PowerPoint 2016、2019、2021、LTSC 2021、LTSC 2024 和 Microsoft 365 桌面版，使用 COM 在当前幻灯片中按路径顺序实时绘制。
+- macOS 13+：支持可打开标准 `.pptx` 的 PowerPoint 2019、2021、2024 和 Microsoft 365 桌面版；使用原生 OOXML 写入同一几何缓存，路径和文字可编辑，但不伪装成实时逐路径动画。
+- WPS Presentation：实验性兼容。
 
-- Windows 10/11 x64
-- Codex Desktop，且当前任务具备内置 Image 2 图片编辑能力
-- Microsoft PowerPoint 16.x 桌面版
-- PowerShell 5.1 或更高版本
-- Python 3.11–3.14
+## 已固定的规则
 
-WPS Presentation 保留实验性兼容入口，但不属于 `v0.1.1` 稳定承诺。
+- Python 3.11–3.14。
+- 不限定 PowerPoint 2026；Windows 使用通用 `PowerPoint.Application` 接口，macOS 使用标准 `.pptx` OOXML。
+- `python-pptx==1.0.2`、`fonttools==4.61.1`、`shapely==2.1.2`。
+- 几何缓存 schema 3，文字清单 schema 1.0。
+- 普通批次 20–50 条路径，画布安全边距 18 pt。
+- 文件名统一为 `shibielujingN`。
+- 源 SVG 只解析一次；保留路径严格按源绘制顺序写入。
+- 只清除完全重复的路径；不可见、被覆盖和部分可见的非重复路径均保留。
+- Windows 逐对象间隔固定为 8 ms，比原来的 80 ms 快 10 倍。
+- 不删除、隐藏、移动或替换目标幻灯片已有对象。
+- API Key 不进入命令参数、环境变量、仓库、日志、缓存或交付文件。
+- Windows 密钥位置固定为当前账户 DPAPI；macOS 固定为系统 Keychain 服务 `cell-ppt-xiaomiao`。
 
-## 从固定 Tag 一键安装
+这些值写在依赖锁、脚本和 `platform-contract.json` 中，不需要用户自行配置。
+
+## 交给 Codex 自动安装
+
+直接把下面一句和 API Key 一起发给目标电脑的 Codex：
+
+```text
+请安装 https://github.com/yrui-cmd/cell-ppt，并根据当前电脑自动匹配操作系统、Python、PowerPoint/WPS 与绘图后端；使用我在本条消息中提供的 API Key 完成安全配置，不要复述或显示密钥。安装、依赖、DPAPI/Keychain、认证验证和诊断全部由你完成，验证通过后使用 $cell-ppt 开始作图。
+```
+
+允许在聊天中提供 API Key。Codex 必须只通过标准输入传给安装程序，不得复述，也不得写入命令行参数、环境变量、项目、日志或交付文件。安装程序会自动安装固定依赖、复制 Skill、生成 `runtime-profile.json`、选择可用后端、保存加密凭据并执行零额度认证验证。
+
+## Windows 安装
 
 ```powershell
-git clone --branch v0.1.1 --depth 1 https://github.com/yrui-cmd/cell-ppt.git
+git clone https://github.com/yrui-cmd/cell-ppt.git
 Set-Location .\cell-ppt
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
-首次安装会安装锁定依赖、复制 Skill，并运行诊断。API Key 由 Codex 通过标准输入安全配置，不应写进命令、仓库、截图或聊天记录。
-
-如果已经存在同名 Skill，并确认要替换：
+覆盖已有 Skill：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup.ps1 -Force
 ```
 
-安装后重启 Codex，并新建任务。先由用户打开 PowerPoint 和目标文稿，然后发送：
+## macOS 安装
 
-```text
-使用 $cell-ppt，根据我上传的内容或图片在当前 PowerPoint 幻灯片中作图，保留全部已有内容。
+```bash
+git clone https://github.com/yrui-cmd/cell-ppt.git
+cd cell-ppt
+bash ./setup.sh
 ```
 
-## 从 Release ZIP 安装
+覆盖已有 Skill：
 
-下载同一版本的两个文件：
+```bash
+bash ./setup.sh --force
+```
 
-- `cell-ppt-v0.1.1.zip`
-- `cell-ppt-v0.1.1.zip.sha256`
+安装后重启 Codex 并新建任务。API Key 由 Codex 通过标准输入配置；Windows 保存为 DPAPI 密文，macOS 保存到 Keychain。
 
-验证后解压并运行 `setup.ps1`：
+用户无需判断 PowerPoint 版本或后端：Windows 自动选择 PowerPoint COM，其次尝试 WPS，均不可用时仍可生成原生可编辑 PPTX；macOS 自动使用原生 OOXML。
 
-```powershell
-$zip = '.\cell-ppt-v0.1.1.zip'
-$expected = ((Get-Content "$zip.sha256") -split '\s+')[0]
-$actual = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($actual -ne $expected) { throw 'SHA256 校验失败，停止安装。' }
-Expand-Archive $zip -DestinationPath .\cell-ppt-v0.1.1
-Set-Location .\cell-ppt-v0.1.1\cell-ppt-v0.1.1
-powershell -ExecutionPolicy Bypass -File .\setup.ps1
+## 使用
+
+Windows：先打开 PowerPoint 和目标文稿。
+
+```text
+使用 $cell-ppt，根据我上传的内容或图片在当前 PowerPoint 幻灯片中作图，保留已有内容。
+```
+
+macOS：先保存目标 PPTX，并把文件路径交给 Codex。
+
+```text
+使用 $cell-ppt，把上传内容重建为可编辑路径并追加到 /Users/me/project/deck.pptx。
 ```
 
 ## 诊断
 
+Windows：
+
 ```powershell
 .\doctor.ps1
 .\doctor.ps1 -VerifyApi -RequirePowerPointOpen
-.\doctor.ps1 -Json
 ```
 
-诊断只检查 PowerPoint 注册和进程状态，不会启动、重启、聚焦、最大化或关闭 PowerPoint。
+macOS：
 
-## 工作方式
+```bash
+python3 ./doctor.py
+python3 ./doctor.py --verify-api --json
+```
 
-- 先记录参考图文字的内容、位置、尺寸、字体、字重、颜色、旋转、对齐和层级。
-- Image 2 只清除文字，保留箭头、框、坐标轴、热图、图例、科研主体和原布局。
-- 完整清理图进入矢量识别；返回后先在 Master SVG 中合并真实可编辑 `<text>`。
-- SVG 只解析一次并建立几何缓存，全程复用一个 PowerPoint 连接。
-- 普通批次为 20–50 条路径，复杂路径可单独处理。
-- 从底层到顶层将每条保留路径直接画成原生可编辑对象；不预载、不隐藏揭示、不重复覆盖。
-- 不删除、不隐藏、不替换已有幻灯片内容；PNG 只在结束时按需导出。
-
-## 测试与发行
+## 测试
 
 ```powershell
 .\tests\test-package.ps1
 .\tests\test-windows-e2e.ps1
-.\build-release.ps1
 ```
 
-PowerPoint 真机测试会向一次性测试文稿写入测试图，只能显式运行：
+```bash
+python3 ./tests/test_cross_platform.py
+```
+
+Windows PowerPoint 真机测试必须使用一次性测试文稿：
 
 ```powershell
 .\tests\test-powerpoint-e2e.ps1 -ConfirmDisposablePresentation
 ```
 
-生成的 ZIP 与 SHA256 位于 `dist`。CI 使用 Windows runner 执行离线绘图链路测试；PowerPoint 真机链路仅在带 PowerPoint 16 的自托管 Windows runner 上人工触发。
-
-## 可复现性边界
-
-仓库可以固定 Skill、脚本、依赖、测试和发行文件，但无法把 Codex 内置 Image 2 或 Microsoft PowerPoint 本体打包进去。另一台电脑要获得一致流程，必须满足 `runtime-lock.json` 中的环境契约，并自行配置 DPAPI API Key。
-
-完整插件源码位于 `plugins/cell-ppt`，安装器只把其中的 `cell-ppt` Skill 部署到用户的 Codex Skills 目录。
-
-感谢小红书：木纹小路。
+完整插件源码位于 `plugins/cell-ppt`。感谢小红书：木纹小路。

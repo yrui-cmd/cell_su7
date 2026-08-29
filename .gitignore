@@ -16,6 +16,7 @@ Cell_ppt-output/
 *.webp
 *.pdf
 *.dpapi
+runtime-profile.json
 __pycache__/
 *.py[cod]
 ~$*

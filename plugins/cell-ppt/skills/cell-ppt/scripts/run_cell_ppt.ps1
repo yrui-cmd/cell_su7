@@ -16,7 +16,7 @@ param(
     [switch]$Foreground,
 
     [ValidateRange(0, 10000)]
-    [int]$StepDelayMs = 0,
+    [int]$StepDelayMs = 8,
 
     [switch]$Overwrite
 )
@@ -69,9 +69,8 @@ function Map-Point($Point, [double]$Scale, [double]$OffsetX, [double]$OffsetY, [
 }
 
 function Show-ObjectStep($Application, $Slide, [bool]$BringForward, [int]$DelayMs) {
-    if ($BringForward) {
-        try { $Application.ActiveWindow.View.GotoSlide($Slide.SlideIndex) } catch {}
-    }
+    # Foreground activation happens once before playback. Re-navigating the
+    # active slide after every object can make PowerPoint reject COM calls.
     if ($DelayMs -gt 0) { Start-Sleep -Milliseconds $DelayMs }
 }
 
@@ -137,11 +136,19 @@ try {
     $offsetX = ($slideWidth - ($viewWidth * $scale)) / 2.0
     $offsetY = ($slideHeight - ($viewHeight * $scale)) / 2.0
     $createdNames = New-Object System.Collections.Generic.List[string]
+    $existingNames = @{}
+    for ($shapeIndex = 1; $shapeIndex -le $slide.Shapes.Count; $shapeIndex++) {
+        try { $existingNames[[string]$slide.Shapes.Item($shapeIndex).Name] = $true } catch {}
+    }
 
     foreach ($batch in $cache.batches) {
         foreach ($atomIndex in $batch.atom_indices) {
             $atom = $cache.atoms[[int]$atomIndex]
             if ($atom.kind -eq 'text') {
+                if ($existingNames.ContainsKey([string]$atom.objectName)) {
+                    $createdNames.Add([string]$atom.objectName)
+                    continue
+                }
                 $text = $atom.text
                 $position = Map-Point $text.position $scale $offsetX $offsetY $viewX $viewY
                 $fontSize = [math]::Max(4.0, [double]$text.fontSize * $scale)
@@ -176,36 +183,43 @@ try {
                 $partIndex = 0
                 foreach ($subpath in $atom.subpaths) {
                     if ($subpath.points.Count -lt 2) { continue }
-                    $first = $subpath.points[0]
-                    $firstAnchor = Map-Point $first.a $scale $offsetX $offsetY $viewX $viewY
-                    $builder = $slide.Shapes.BuildFreeform(1, [single]$firstAnchor[0], [single]$firstAnchor[1])
-                    for ($pointIndex = 1; $pointIndex -lt $subpath.points.Count; $pointIndex++) {
-                        $previous = $subpath.points[$pointIndex - 1]
-                        $current = $subpath.points[$pointIndex]
-                        $end = Map-Point $current.a $scale $offsetX $offsetY $viewX $viewY
-                        if ((Test-SamePoint $previous.r $previous.a) -and (Test-SamePoint $current.l $current.a)) {
-                            $builder.AddNodes(0, 1, [single]$end[0], [single]$end[1])
-                        }
-                        else {
-                            $control1 = Map-Point $previous.r $scale $offsetX $offsetY $viewX $viewY
-                            $control2 = Map-Point $current.l $scale $offsetX $offsetY $viewX $viewY
-                            $builder.AddNodes(1, 1, [single]$control1[0], [single]$control1[1], [single]$control2[0], [single]$control2[1], [single]$end[0], [single]$end[1])
-                        }
+                    $shapeName = "{0}_PART_{1:D3}" -f [string]$atom.objectName, $partIndex
+                    if ($existingNames.ContainsKey($shapeName)) {
+                        $shape = $slide.Shapes.Item($shapeName)
                     }
-                    if ($subpath.closed) {
-                        $previous = $subpath.points[$subpath.points.Count - 1]
-                        $current = $first
-                        if ((Test-SamePoint $previous.r $previous.a) -and (Test-SamePoint $current.l $current.a)) {
-                            $builder.AddNodes(0, 1, [single]$firstAnchor[0], [single]$firstAnchor[1])
+                    else {
+                        $first = $subpath.points[0]
+                        $firstAnchor = Map-Point $first.a $scale $offsetX $offsetY $viewX $viewY
+                        $builder = $slide.Shapes.BuildFreeform(1, [single]$firstAnchor[0], [single]$firstAnchor[1])
+                        for ($pointIndex = 1; $pointIndex -lt $subpath.points.Count; $pointIndex++) {
+                            $previous = $subpath.points[$pointIndex - 1]
+                            $current = $subpath.points[$pointIndex]
+                            $end = Map-Point $current.a $scale $offsetX $offsetY $viewX $viewY
+                            if ((Test-SamePoint $previous.r $previous.a) -and (Test-SamePoint $current.l $current.a)) {
+                                $builder.AddNodes(0, 1, [single]$end[0], [single]$end[1])
+                            }
+                            else {
+                                $control1 = Map-Point $previous.r $scale $offsetX $offsetY $viewX $viewY
+                                $control2 = Map-Point $current.l $scale $offsetX $offsetY $viewX $viewY
+                                $builder.AddNodes(1, 1, [single]$control1[0], [single]$control1[1], [single]$control2[0], [single]$control2[1], [single]$end[0], [single]$end[1])
+                            }
                         }
-                        else {
-                            $control1 = Map-Point $previous.r $scale $offsetX $offsetY $viewX $viewY
-                            $control2 = Map-Point $current.l $scale $offsetX $offsetY $viewX $viewY
-                            $builder.AddNodes(1, 1, [single]$control1[0], [single]$control1[1], [single]$control2[0], [single]$control2[1], [single]$firstAnchor[0], [single]$firstAnchor[1])
+                        if ($subpath.closed) {
+                            $previous = $subpath.points[$subpath.points.Count - 1]
+                            $current = $first
+                            if ((Test-SamePoint $previous.r $previous.a) -and (Test-SamePoint $current.l $current.a)) {
+                                $builder.AddNodes(0, 1, [single]$firstAnchor[0], [single]$firstAnchor[1])
+                            }
+                            else {
+                                $control1 = Map-Point $previous.r $scale $offsetX $offsetY $viewX $viewY
+                                $control2 = Map-Point $current.l $scale $offsetX $offsetY $viewX $viewY
+                                $builder.AddNodes(1, 1, [single]$control1[0], [single]$control1[1], [single]$control2[0], [single]$control2[1], [single]$firstAnchor[0], [single]$firstAnchor[1])
+                            }
                         }
+                        $shape = $builder.ConvertToShape()
+                        $shape.Name = $shapeName
+                        $existingNames[$shapeName] = $true
                     }
-                    $shape = $builder.ConvertToShape()
-                    $shape.Name = "{0}_PART_{1:D3}" -f [string]$atom.objectName, $partIndex
                     $paint = $atom.paintParts[[math]::Min($partIndex, $atom.paintParts.Count - 1)]
                     if ($paint.filled -and $subpath.closed) {
                         $shape.Fill.Visible = -1

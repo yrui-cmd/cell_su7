@@ -26,18 +26,20 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Visibility culling failed.' }
 
     $cache = Get-Content -LiteralPath (Join-Path $cacheRoot 'geometry-cache.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ([int]$cache.source_total_drawing_paths -le [int]$cache.total_atoms) { throw 'Fixture did not cull hidden or duplicate drawing paths.' }
-    if ([int]$cache.culled_atom_count -lt 2) { throw 'Expected hidden and duplicate paths were not culled.' }
-    if (($cache.atoms | Where-Object { $_.kind -ne 'text' -and $_.subpaths.Count -ne 1 }).Count -ne 0) { throw 'Drawing units were not normalized to one subpath.' }
-    if (($cache.atoms | Where-Object { $_.kind -eq 'text' -and $_.text.contents -eq 'Cell_ppt' }).Count -ne 1) { throw 'Editable text was not preserved.' }
-    if (($cache.batches | Where-Object { $_.atomic_count -gt 50 }).Count -ne 0) { throw 'Batch size exceeded 50.' }
+    if ([int]$cache.source_total_drawing_paths -le [int]$cache.total_atoms) { throw 'Fixture did not remove its exact duplicate path.' }
+    if ([int]$cache.culled_atom_count -ne 1) { throw 'Only the exact duplicate path should be removed.' }
+    if (@($cache.culled_atoms | Where-Object { $_.reason -ne 'exact_duplicate' }).Count -ne 0) { throw 'A non-duplicate path was removed.' }
+    if (@($cache.atoms | Where-Object { $_.sourceId -eq 'green-hidden' }).Count -ne 1) { throw 'A covered non-duplicate path was not preserved.' }
+    if (@($cache.atoms | Where-Object { $_.kind -ne 'text' -and $_.subpaths.Count -ne 1 }).Count -ne 0) { throw 'Drawing units were not normalized to one subpath.' }
+    if (@($cache.atoms | Where-Object { $_.kind -eq 'text' -and $_.text.contents -eq 'Cell_ppt' }).Count -ne 1) { throw 'Editable text was not preserved.' }
+    if (@($cache.batches | Where-Object { $_.atomic_count -gt 50 }).Count -ne 0) { throw 'Batch size exceeded 50.' }
 
     $runtimeText = Get-Content -LiteralPath (Join-Path $skillRoot 'scripts\run_cell_ppt.ps1') -Raw -Encoding UTF8
     foreach ($contract in @('$application = $hostInfo.Application', '$shape.ZOrder(0)', 'Show-ObjectStep', '$UseActivePresentation')) {
         if ($runtimeText -notlike "*$contract*") { throw "PowerPoint runtime contract is missing: $contract" }
     }
     $fromSvgText = Get-Content -LiteralPath (Join-Path $skillRoot 'scripts\run_from_svg.ps1') -Raw -Encoding UTF8
-    if ($fromSvgText -notmatch 'StepDelayMs = 80' -or $fromSvgText -notmatch 'cull_hidden_geometry.py') { throw 'SVG wrapper does not enforce frozen drawing defaults.' }
+    if ($fromSvgText -notmatch 'StepDelayMs = 8' -or $fromSvgText -notmatch 'cull_hidden_geometry.py') { throw 'SVG wrapper does not enforce fixed core drawing defaults.' }
 }
 finally {
     if (Test-Path -LiteralPath $tempBase) {
@@ -47,4 +49,4 @@ finally {
     }
 }
 
-Write-Output 'WINDOWS_E2E_OK|cache=single-parse|visibility=culled|text=editable|batch=20-50|delay_ms=80'
+Write-Output 'WINDOWS_E2E_OK|cache=single-parse|duplicates=removed-only|text=editable|batch=20-50|delay_ms=8'

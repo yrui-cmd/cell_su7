@@ -18,7 +18,7 @@ Add-Type -AssemblyName System.Net.Http
 
 function Get-XiaomiaoToken {
     if (-not (Test-Path -LiteralPath $SecretPath -PathType Leaf)) {
-        throw "Xiaomiao API key is not configured. Run set-xiaomiao-key.ps1 first."
+        throw "Xiaomiao API key is not configured. Codex must request it in chat and configure it automatically through standard input."
     }
 
     $cipherText = [IO.File]::ReadAllText($SecretPath, [Text.Encoding]::UTF8).Trim()

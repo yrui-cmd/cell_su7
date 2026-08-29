@@ -27,6 +27,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
+$pythonCommand = Get-Command py -ErrorAction SilentlyContinue
+$pythonPrefix = @('-3', '-X', 'utf8')
+if (-not $pythonCommand) {
+    $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+    $pythonPrefix = @('-X', 'utf8')
+}
+if (-not $pythonCommand) { throw 'Python 3.11-3.14 was not found.' }
+$pythonExe = $pythonCommand.Source
 
 $inputPath = (Resolve-Path -LiteralPath $InputImage).Path
 $outputPath = [IO.Path]::GetFullPath($OutputSvg)
@@ -112,9 +120,9 @@ try {
         throw "Xiaomiao SVG download failed after retries: $lastDownloadError"
     }
 
-    $validationOutput = & py -3 -X utf8 $validator --svg $temporarySvg 2>&1
+    $validationOutput = & $pythonExe @pythonPrefix $validator --svg $temporarySvg 2>&1
     if ($LASTEXITCODE -ne 0) {
-        throw "Downloaded result is not a valid true-vector SVG: $validationOutput"
+        throw "Downloaded path-return result is not a valid SVG: $validationOutput"
     }
 
     Move-Item -LiteralPath $temporarySvg -Destination $outputPath -Force
