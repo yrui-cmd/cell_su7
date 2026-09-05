@@ -5,7 +5,7 @@
 Treat this section as the finalized drawing baseline. Do not reinterpret, relax, or override it unless the user explicitly asks to update `cell_su7` itself.
 
 - Convert every path retained by the duplicate-path filter to a native editable PowerPoint object. Use WPS only as an explicitly experimental backend.
-- Sole filtering rule: remove exact duplicate drawing paths only. Preserve every non-duplicate path, including invisible, fully covered, and partially visible paths.
+- The SVG parser excludes non-rendering elements such as display:none, hidden visibility and zero-opacity paint. Of the parsed drawing paths, remove exact duplicates only; retain non-duplicate fully covered and partially visible paths in source paint order. Covered geometry is different from a non-rendering element.
 - Apply that rule to actual drawing paths, including separate subpaths inside one source SVG element.
 - Put each retained drawing path into the cache exactly once. Draw it exactly once; never create a duplicate copy or a temporary covering layer.
 - Convert paths to editable freeform Bézier shapes, text to text boxes, and preserve paint order.

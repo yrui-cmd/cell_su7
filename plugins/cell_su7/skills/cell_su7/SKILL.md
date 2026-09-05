@@ -15,6 +15,8 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 
 ## Drawing routes
 
+If the canvas or application suddenly turns white during drawing, read [references/white-overlay-diagnostics.md](references/white-overlay-diagnostics.md) before changing visibility, deleting shapes or retrying playback. A white application window is not evidence of hidden geometry.
+
 - Windows, prepared image: `scripts/run_cell_su7.ps1 -InputImage <cleaned-image> -TextManifest <text.json> -OutputRoot <directory> -Application ppt|ai`. This dispatches to the matching original backend; normal rendering remains per-path, not a hidden completed-figure reveal.
 - PPT: read [references/powerpoint-workflow.md](references/powerpoint-workflow.md), [references/backends.md](references/backends.md) and [references/platform-contract.json](references/platform-contract.json). Windows uses `run_from_image.ps1` / `run_from_svg.ps1`; macOS uses `run_from_image.py` / `run_from_svg.py`. Match the technical PPT backend with `configure_runtime.py` and `runtime-profile.json` automatically after the user chooses PPT. Native OOXML output is editable but does not provide live per-path screen drawing.
 - Illustrator: read [references/illustrator-workflow.md](references/illustrator-workflow.md) and [references/illustrator-runtime.md](references/illustrator-runtime.md). Use `run_illustrator_from_image.ps1` for images or `run_cell_lct.ps1` for approved SVGs. The existing live runtime requires Windows and an already-open Illustrator 2026 document. Do not launch, restart, focus, resize or close Illustrator. Do not silently switch an unsupported Illustrator environment to PPT.
