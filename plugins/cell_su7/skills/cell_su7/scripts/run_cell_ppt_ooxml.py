@@ -197,7 +197,11 @@ def main() -> int:
         raise SystemExit("Unsupported geometry cache schema")
     if any("sourceSubpathIndex" in atom for atom in cache.get("atoms", [])):
         raise SystemExit("REBUILD_CACHE_REQUIRED: legacy cache split compound contours; rebuild from the original SVG")
+    view_x, view_y, view_width, view_height = map(float, cache["view_box"])
     prs = Presentation(str(args.input_pptx)) if args.input_pptx else Presentation()
+    if not args.input_pptx:
+        prs.slide_width = int(960 * EMU_PER_PT)
+        prs.slide_height = int(960 * view_height / view_width * EMU_PER_PT)
     if args.slide_index:
         if not 1 <= args.slide_index <= len(prs.slides):
             raise SystemExit("slide-index is out of range")
@@ -208,7 +212,7 @@ def main() -> int:
     slide_width = prs.slide_width / EMU_PER_PT
     slide_height = prs.slide_height / EMU_PER_PT
     view_x, view_y, view_width, view_height = map(float, cache["view_box"])
-    margin = 18.0
+    margin = 18.0 if args.input_pptx else 0.0
     scale = min((slide_width - 2 * margin) / view_width, (slide_height - 2 * margin) / view_height)
     offset_x = (slide_width - view_width * scale) / 2.0
     offset_y = (slide_height - view_height * scale) / 2.0

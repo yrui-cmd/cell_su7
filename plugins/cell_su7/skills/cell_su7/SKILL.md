@@ -57,3 +57,5 @@ Preserve all original image content through recognition, validate true vector ou
 ## Balance reporting
 
 After image recognition, include the reported remaining credits in the user-facing result (`剩余额度：N`). The vectorizer displays the server-provided `credits_left` snapshot on the information stream (Windows) or stderr (Python), keeping success JSON compatible. Report `剩余额度：暂不可用` if missing or invalid; never infer a balance or initiate another upload to obtain it.
+
+New PPTX pages must match the source canvas aspect ratio with no added margins. Existing input decks retain their page size. Export previews at that same aspect ratio.
