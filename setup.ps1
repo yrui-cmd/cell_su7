@@ -58,7 +58,7 @@ if ($LASTEXITCODE -ne 0) {
 if ($LASTEXITCODE -ne 0) { throw 'Locked Python dependency installation failed.' }
 
 & $installer -Force:$Force
-$installedSkill = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.codex\skills\cell-ppt'
+$installedSkill = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.codex\skills\cell_gd'
 $profile = Join-Path $installedSkill 'runtime-profile.json'
 & $pythonExe @pythonPrefix (Join-Path $installedSkill 'scripts\configure_runtime.py') --output $profile
 if ($LASTEXITCODE -ne 0) { throw 'Automatic runtime matching failed.' }
@@ -97,4 +97,4 @@ elseif (Test-Path -LiteralPath (Join-Path ([Environment]::GetFolderPath('UserPro
 }
 
 & $doctor -VerifyApi:$keyConfigured
-Write-Output "SETUP_OK|skill=cell-ppt|platform=windows|runtime_matched=true|api_key_configured=$($keyConfigured.ToString().ToLowerInvariant())|restart_codex=true"
+Write-Output "SETUP_OK|skill=cell_gd|platform=windows|runtime_matched=true|api_key_configured=$($keyConfigured.ToString().ToLowerInvariant())|restart_codex=true"

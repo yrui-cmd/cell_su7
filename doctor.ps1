@@ -9,7 +9,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath($PSScriptRoot)
-$skillRoot = Join-Path $projectRoot 'plugins\cell-ppt\skills\cell-ppt'
+$skillRoot = Join-Path $projectRoot 'plugins\cell_gd\skills\cell_gd'
 $required = @(
     'SKILL.md',
     'scripts\run_cell_ppt.ps1',
@@ -17,7 +17,9 @@ $required = @(
     'scripts\run_from_image.ps1',
     'scripts\prepare_geometry_cache.py',
     'scripts\cull_hidden_geometry.py',
-    'scripts\merge_live_text.py',
+    'scripts\run_cell_gd.ps1',
+    'scripts\run_cell_lct.ps1',
+    'scripts\prepare_illustrator_cache.py',
     'scripts\vectorize-xiaomiao.ps1',
     'scripts\set-xiaomiao-key.ps1'
 )
@@ -50,7 +52,7 @@ if ($VerifyApi) {
 
 $result = [ordered]@{
     ok = $true
-    skill = 'cell-ppt'
+    skill = 'cell_gd'
     powerPointRegistered = $powerPointRegistered
     powerPointOpen = $powerPointOpen
     wpsExperimentalRegistered = $wpsRegistered
@@ -59,4 +61,4 @@ $result = [ordered]@{
     apiAuthenticated = $apiAuthenticated
 }
 if ($Json) { $result | ConvertTo-Json -Compress }
-else { Write-Output "DOCTOR_OK|skill=cell-ppt|backend=$selectedBackend|powerpoint=$($powerPointRegistered.ToString().ToLowerInvariant())|powerpoint_open=$($powerPointOpen.ToString().ToLowerInvariant())|wps_experimental=$($wpsRegistered.ToString().ToLowerInvariant())|api_verified=$($VerifyApi.ToString().ToLowerInvariant())" }
+else { Write-Output "DOCTOR_OK|skill=cell_gd|backend=$selectedBackend|powerpoint=$($powerPointRegistered.ToString().ToLowerInvariant())|powerpoint_open=$($powerPointOpen.ToString().ToLowerInvariant())|wps_experimental=$($wpsRegistered.ToString().ToLowerInvariant())|api_verified=$($VerifyApi.ToString().ToLowerInvariant())" }

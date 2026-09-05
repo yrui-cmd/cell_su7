@@ -10,7 +10,9 @@ macOS does not expose Windows COM. Support PowerPoint 2019, 2021, 2024, and Micr
 
 Use `setup.sh`, `install.py`, `doctor.py`, macOS Keychain, `xiaomiao.py`, `vectorize_xiaomiao.py`, `run_from_image.py`, and `run_from_svg.py` on macOS. Do not call Windows `.ps1` COM or DPAPI entry points there.
 
-## Automatic selection
+## Automatic PPT backend selection
+
+This applies after the user chooses PPT, not to the PPT versus Illustrator decision.
 
 Installation runs `configure_runtime.py` and writes the non-secret `runtime-profile.json`. Use its selected host without asking the user: PowerPoint live COM first on Windows, experimental WPS COM second, editable OOXML fallback otherwise, and editable OOXML on macOS. Regenerate the profile automatically if it is missing or the machine environment changes.
 

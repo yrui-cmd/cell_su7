@@ -1,4 +1,4 @@
-name: Validate Cell_ppt
+name: Validate cell_gd
 
 on:
   push:
@@ -22,10 +22,14 @@ jobs:
       - name: Install fixed dependencies
         run: python -m pip install --requirement requirements.lock
       - name: Compile Python runtime
-        run: python -m compileall -q install.py doctor.py plugins/cell-ppt/skills/cell-ppt/scripts tests/test_cross_platform.py
+        run: python -m compileall -q install.py doctor.py plugins/cell_gd/skills/cell_gd/scripts tests/test_cross_platform.py
       - name: Validate macOS setup entrypoint
         if: runner.os == 'macOS'
         run: bash -n ./setup.sh
+      - name: Test unchanged original-image forwarding and AI cache
+        run: python tests/test_original_image.py
+      - name: Test balance reporting without API calls
+        run: python tests/test_balance.py
       - name: Test shared core and editable OOXML output
         run: python tests/test_cross_platform.py
 
@@ -47,3 +51,6 @@ jobs:
       - name: Run deterministic Windows workflow test
         shell: powershell
         run: .\tests\test-windows-e2e.ps1
+      - name: Test both original-image routes without API calls
+        shell: powershell
+        run: .\tests\test-image-routing.ps1

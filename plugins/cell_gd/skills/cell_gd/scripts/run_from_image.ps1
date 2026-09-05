@@ -6,9 +6,6 @@ param(
     [string]$InputImage,
 
     [Parameter(Mandatory = $true)]
-    [string]$TextManifest,
-
-    [Parameter(Mandatory = $true)]
     [string]$OutputRoot,
 
     [ValidateSet('auto', 'powerpoint', 'wps', 'ooxml')]
@@ -41,19 +38,17 @@ if (-not $pythonCommand) {
 if (-not $pythonCommand) { throw 'Python 3.11-3.14 was not found.' }
 $pythonExe = $pythonCommand.Source
 $inputPath = (Resolve-Path -LiteralPath $InputImage).Path
-$manifestPath = (Resolve-Path -LiteralPath $TextManifest).Path
 $outputRootPath = [IO.Path]::GetFullPath($OutputRoot)
 New-Item -ItemType Directory -Force -Path $outputRootPath | Out-Null
 
 $allocator = Join-Path $PSScriptRoot 'allocate_shibielujing_name.py'
 $vectorizer = Join-Path $PSScriptRoot 'vectorize-xiaomiao.ps1'
-$textMerger = Join-Path $PSScriptRoot 'merge_live_text.py'
 $cacheBuilder = Join-Path $PSScriptRoot 'prepare_geometry_cache.py'
 $visibilityCuller = Join-Path $PSScriptRoot 'cull_hidden_geometry.py'
 $pptRuntime = Join-Path $PSScriptRoot 'run_cell_ppt.ps1'
 $ooxmlRuntime = Join-Path $PSScriptRoot 'run_cell_ppt_ooxml.py'
 $runtimeConfigurator = Join-Path $PSScriptRoot 'configure_runtime.py'
-foreach ($required in @($allocator, $vectorizer, $textMerger, $cacheBuilder, $visibilityCuller, $pptRuntime, $ooxmlRuntime, $runtimeConfigurator)) {
+foreach ($required in @($allocator, $vectorizer, $cacheBuilder, $visibilityCuller, $pptRuntime, $ooxmlRuntime, $runtimeConfigurator)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Missing runtime file: $required" }
 }
 
@@ -73,8 +68,9 @@ $vectorizerArgs = @{
 }
 if ($ApproveHighCost) { $vectorizerArgs.ApproveHighCost = $true }
 & $vectorizer @vectorizerArgs | Out-Null
-& $pythonExe @pythonPrefix $textMerger --input-svg $rawSvg --text-manifest $manifestPath --output-svg $masterSvg | Out-Null
-if ($LASTEXITCODE -ne 0) { throw 'Editable text merge failed.' }
+Copy-Item -LiteralPath $rawSvg -Destination $masterSvg
+& $pythonExe @pythonPrefix (Join-Path $PSScriptRoot 'validate_vector_svg.py') --svg $masterSvg | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'SVG validation failed.' }
 & $pythonExe @pythonPrefix $cacheBuilder --input $masterSvg --output-dir $cacheRoot --job-id $baseName | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Geometry cache preparation failed.' }
 & $pythonExe @pythonPrefix $visibilityCuller --cache (Join-Path $cacheRoot 'geometry-cache.json') --state (Join-Path $cacheRoot 'drawing-state.json') | Out-Null
@@ -116,6 +112,5 @@ else {
     pptx = $outputPptx
     svg = $masterSvg
     vector_svg = $rawSvg
-    text_manifest = $manifestPath
     cache = (Join-Path $cacheRoot 'geometry-cache.json')
 } | ConvertTo-Json -Compress

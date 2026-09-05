@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
-$manifest = Get-Content -LiteralPath (Join-Path $repoRoot 'plugins\cell-ppt\.codex-plugin\plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$manifest = Get-Content -LiteralPath (Join-Path $repoRoot 'plugins\cell_gd\.codex-plugin\plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 if ([string]::IsNullOrWhiteSpace($Version)) { $Version = [string]$manifest.version }
 if ($manifest.version -ne $Version) { throw "Plugin version $($manifest.version) does not match release $Version." }
 if (Test-Path -LiteralPath (Join-Path $repoRoot '.agents\plugins\marketplace.json')) { throw 'Marketplace metadata is forbidden in this release.' }
@@ -20,8 +20,8 @@ if (-not $SkipTests) {
 
 $distRoot = Join-Path $repoRoot 'dist'
 $tempRoot = Join-Path $repoRoot '.release-tmp'
-$stageRoot = Join-Path $tempRoot "cell-ppt-v$Version"
-$zipPath = Join-Path $distRoot "cell-ppt-v$Version.zip"
+$stageRoot = Join-Path $tempRoot "cell_gd-v$Version"
+$zipPath = Join-Path $distRoot "cell_gd-v$Version.zip"
 $hashPath = "$zipPath.sha256"
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stageRoot, $distRoot | Out-Null
@@ -42,7 +42,7 @@ Get-ChildItem -LiteralPath $stageRoot -Recurse -File -Include '*.pyc','*.pyo','*
 }
 
 $releaseManifest = [ordered]@{
-    product = 'Cell_ppt'
+    product = 'cell_gd'
     version = $Version
     tag = "v$Version"
     createdUtc = [DateTime]::UtcNow.ToString('o')
@@ -50,7 +50,7 @@ $releaseManifest = [ordered]@{
     credentialsIncluded = $false
     dependencyLock = 'requirements.lock'
     runtimeLock = 'runtime-lock.json'
-    platformContract = 'plugins/cell-ppt/skills/cell-ppt/references/platform-contract.json'
+    platformContract = 'plugins/cell_gd/skills/cell_gd/references/platform-contract.json'
 }
 $releaseManifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $stageRoot 'RELEASE-MANIFEST.json') -Encoding UTF8
 

@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 
 [CmdletBinding()]
 param(
@@ -99,6 +99,16 @@ do {
 if ($null -eq $job -or [string]$job.status -ne "completed") {
     $suffix = if ($lastStatusError) { " Last status error: $lastStatusError" } else { "" }
     throw "Xiaomiao job timed out after $TimeoutSeconds seconds.$suffix"
+}
+
+# Information stream remains visible when callers discard success output.
+$balance = $job.credits_left
+$isNumber = $balance -is [int] -or $balance -is [long] -or $balance -is [double] -or $balance -is [decimal]
+if ($isNumber -and $balance -ge 0 -and -not [double]::IsInfinity([double]$balance) -and -not [double]::IsNaN([double]$balance)) {
+    Write-Host "剩余额度：$balance"
+}
+else {
+    Write-Host "剩余额度：暂不可用"
 }
 
 $temporarySvg = "$outputPath.download.$PID"

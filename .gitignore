@@ -6,7 +6,7 @@
 .dry-run-out/
 .release-tmp/
 dist/
-Cell_ppt-output/
+cell_gd-output/
 *.pptx
 *.ppt
 *.ai

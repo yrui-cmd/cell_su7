@@ -18,4 +18,4 @@ if (-not $pythonCommand) {
 if (-not $pythonCommand) { throw 'Python 3.11-3.14 was not found.' }
 if ($Force) { $arguments += '--force' }
 & $pythonCommand.Source @arguments
-if ($LASTEXITCODE -ne 0) { throw 'Cell_ppt installation failed.' }
+if ($LASTEXITCODE -ne 0) { throw 'cell_gd installation failed.' }

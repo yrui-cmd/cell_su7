@@ -8,7 +8,7 @@ if (-not $ConfirmDisposablePresentation) { throw 'Pass -ConfirmDisposablePresent
 if (@(Get-Process -Name POWERPNT -ErrorAction SilentlyContinue).Count -gt 0) { throw 'Close all user PowerPoint windows before running the disposable live test.' }
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$skillRoot = Join-Path $repoRoot 'plugins\cell-ppt\skills\cell-ppt'
+$skillRoot = Join-Path $repoRoot 'plugins\cell_gd\skills\cell_gd'
 $tempBase = Join-Path $repoRoot '.test-tmp'
 $tempRoot = Join-Path $tempBase ([Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null

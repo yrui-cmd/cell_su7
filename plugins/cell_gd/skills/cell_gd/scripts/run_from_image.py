@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Cross-platform cleaned-image-to-editable-PPTX wrapper for macOS."""
+"""Cross-platform original-image-to-editable-PPTX wrapper for macOS."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +18,6 @@ def run(*args: str):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-image", required=True, type=Path)
-    parser.add_argument("--text-manifest", required=True, type=Path)
     parser.add_argument("--output-root", required=True, type=Path)
     parser.add_argument("--input-pptx", type=Path)
     parser.add_argument("--slide-index", type=int, default=0)
@@ -42,12 +42,7 @@ def main() -> int:
     if args.approve_high_cost:
         vector_command.append("--approve-high-cost")
     run(*vector_command)
-    run(
-        str(scripts / "merge_live_text.py"),
-        "--input-svg", str(raw_svg),
-        "--text-manifest", str(args.text_manifest.resolve()),
-        "--output-svg", str(master_svg),
-    )
+    shutil.copyfile(raw_svg, master_svg)
     command = [
         str(scripts / "run_from_svg.py"),
         "--input-svg", str(master_svg),

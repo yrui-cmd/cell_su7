@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cross-platform Cell_ppt skill installer."""
+"""Cross-platform cell_gd skill installer."""
 
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ def main() -> int:
     args = parser.parse_args()
 
     project = Path(__file__).resolve().parent
-    source = project / "plugins" / "cell-ppt" / "skills" / "cell-ppt"
+    source = project / "plugins" / "cell_gd" / "skills" / "cell_gd"
     target_root = args.destination.expanduser().resolve()
-    target = target_root / "cell-ppt"
+    target = target_root / "cell_gd"
     if not source.is_dir():
         raise SystemExit(f"Plugin skill directory is missing: {source}")
     target_root.mkdir(parents=True, exist_ok=True)
@@ -39,7 +39,7 @@ def main() -> int:
         [sys.executable, str(target / "scripts" / "configure_runtime.py"), "--output", str(target / "runtime-profile.json")],
         check=True,
     )
-    print(f"INSTALLED|skill=cell-ppt|destination={target}|copy=true")
+    print(f"INSTALLED|skill=cell_gd|destination={target}|copy=true")
     print("Restart Codex and start a new task before first use.")
     return 0
 

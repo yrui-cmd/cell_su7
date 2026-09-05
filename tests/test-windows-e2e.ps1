@@ -5,17 +5,15 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$skillRoot = Join-Path $repoRoot 'plugins\cell-ppt\skills\cell-ppt'
+$skillRoot = Join-Path $repoRoot 'plugins\cell_gd\skills\cell_gd'
 $fixture = Join-Path $PSScriptRoot 'fixtures\visibility.svg'
-$manifest = Join-Path $PSScriptRoot 'fixtures\text-manifest.json'
 $tempBase = Join-Path $repoRoot '.test-tmp'
 $tempRoot = Join-Path $tempBase ([Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
 
 try {
     $master = Join-Path $tempRoot 'master.svg'
-    py -3 -X utf8 (Join-Path $skillRoot 'scripts\merge_live_text.py') --input-svg $fixture --text-manifest $manifest --output-svg $master | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw 'Live text merge failed.' }
+    Copy-Item -LiteralPath $fixture -Destination $master
     py -3 -X utf8 (Join-Path $skillRoot 'scripts\validate_vector_svg.py') --svg $master | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Master SVG validation failed.' }
 
@@ -31,7 +29,6 @@ try {
     if (@($cache.culled_atoms | Where-Object { $_.reason -ne 'exact_duplicate' }).Count -ne 0) { throw 'A non-duplicate path was removed.' }
     if (@($cache.atoms | Where-Object { $_.sourceId -eq 'green-hidden' }).Count -ne 1) { throw 'A covered non-duplicate path was not preserved.' }
     if (@($cache.atoms | Where-Object { $_.kind -ne 'text' -and $_.subpaths.Count -ne 1 }).Count -ne 0) { throw 'Drawing units were not normalized to one subpath.' }
-    if (@($cache.atoms | Where-Object { $_.kind -eq 'text' -and $_.text.contents -eq 'Cell_ppt' }).Count -ne 1) { throw 'Editable text was not preserved.' }
     if (@($cache.batches | Where-Object { $_.atomic_count -gt 50 }).Count -ne 0) { throw 'Batch size exceeded 50.' }
 
     $runtimeText = Get-Content -LiteralPath (Join-Path $skillRoot 'scripts\run_cell_ppt.ps1') -Raw -Encoding UTF8

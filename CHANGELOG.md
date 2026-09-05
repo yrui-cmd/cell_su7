@@ -1,3 +1,9 @@
+# 0.3.0 — cell_gd
+
+- Unify both distributions under cell_gd with user-selected PPT / Illustrator drawing.
+- Send original images directly to path recognition; remove text cleanup and reinsertion.
+- Preserve backend-specific rendering, cache schemas, ordering and post-processing.
+
 # Changelog
 
 ## 0.2.0 - Unreleased
@@ -18,6 +24,6 @@
 
 ## 0.1.0 - 2026-08-27
 
-- Freeze the tested Cell_ppt PowerPoint drawing workflow.
+- Freeze the tested cell_gd PowerPoint drawing workflow.
 - Add live editable text, native freeform paths, single-cache drawing, hidden-path culling, and existing-slide protection.
 - Add locked dependencies, DPAPI credential storage, package tests, PowerPoint end-to-end tests, release ZIP, and SHA256 verification.

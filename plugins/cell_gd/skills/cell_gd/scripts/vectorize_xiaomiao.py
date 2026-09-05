@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import subprocess
 import sys
 import time
@@ -16,6 +17,14 @@ def call(adapter: Path, action: str, *extra: str):
     if proc.returncode:
         raise RuntimeError(proc.stderr.strip() or proc.stdout.strip() or f"{action} failed")
     return json.loads(proc.stdout)
+
+
+
+def balance_message(value):
+    """Only display a non-negative finite server-provided credit balance."""
+    if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value >= 0:
+        return f"剩余额度：{value}"
+    return "剩余额度：暂不可用"
 
 
 def main() -> int:
@@ -49,6 +58,7 @@ def main() -> int:
         time.sleep(args.poll_seconds)
     if not job or job.get("status") != "completed":
         raise SystemExit("Xiaomiao job timed out.")
+    print(balance_message(job.get("credits_left")), file=sys.stderr)
     args.output_svg.parent.mkdir(parents=True, exist_ok=True)
     call(adapter, "download", "--image-id", image_id, "--output-path", str(args.output_svg.resolve()))
     validator = Path(__file__).with_name("validate_vector_svg.py")
