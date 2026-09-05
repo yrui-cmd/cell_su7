@@ -1,3 +1,9 @@
+# 0.4.1 — individual-path playback
+
+- Prefer zero-delay sequential native-path display on Windows PowerPoint.
+- Prepare an isolated hidden copy and reveal objects in source order without clipboard transfers.
+- Preserve compound holes and source canvas ratio; explicitly retain macOS file-only limits.
+
 # 0.4.0 — compound holes, fast PPT and platform routing
 
 - Preserve compound contours in native PPT; reject unsafe legacy COM splitting.

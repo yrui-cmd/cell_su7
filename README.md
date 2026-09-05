@@ -50,3 +50,7 @@ python plugins/cell_su7/skills/cell_su7/scripts/run_from_image.py --input-image 
 白板问题来自把带镂空的白色复合路径拆成独立填充，不能只靠移到底层解决。现在保持复合路径完整，按源文件从后往前排列；PPT 使用快速原生文件写入，Illustrator 每批刷新。旧版拆分缓存必须从 SVG 重新生成。四种运行组合及实测范围见 [平台说明](plugins/cell_su7/skills/cell_su7/references/backends.md)。
 
 跨平台入口：`python plugins/cell_su7/skills/cell_su7/scripts/run_cell_su7.py --input-image cleaned.png --text-manifest text.json --output-root output --application ppt`，`ppt` 可改为 `ai`。
+
+### 逐路径显示（Windows PowerPoint）
+
+默认先生成原生可编辑对象，再按原图层次逐个显示，零额外延时，不使用逐对象剪贴板复制。带镂空的复合路径保持完整。macOS PowerPoint 当前仍交付可编辑文件，未实现该可见播放入口。

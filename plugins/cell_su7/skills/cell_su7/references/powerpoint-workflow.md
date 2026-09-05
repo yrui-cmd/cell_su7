@@ -9,3 +9,7 @@ Only collapse adjacent identical opaque whole atoms, keeping the first. Preserve
 Legacy Windows COM (`run_cell_ppt.ps1`) is opt-in for live demonstration of simple single-contour artwork. It rejects compound caches before touching PowerPoint because the old per-subpath API route destroys holes. It is slower for many paths. Never select it automatically for a complex scientific figure merely because PowerPoint is installed.
 
 Verify: no raster media, all expected native text, preserved contour counts, correct source stacking, saved PPTX reopens, and PowerPoint's rendered slide has no accidental opaque covers. Inspect label positions against the original. Existing user artwork must remain intact.
+
+## Individual-path display preference
+
+On Windows, follow file generation with `scripts/run_ppt_path_playback.ps1 -InputPptx <prepared.pptx> -OutputPptx <new.pptx>`. It reveals prebuilt native paths one at a time without clipboard transfer or artificial delays. It preserves geometry, colors, compound holes and original order. Use a new isolated one-slide file; existing decks are never hidden. This helper has no macOS desktop implementation.

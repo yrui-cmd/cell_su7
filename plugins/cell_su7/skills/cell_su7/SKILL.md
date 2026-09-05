@@ -13,12 +13,20 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 4. Submit the verified cleaned image with the bundled API adapter. Pass its original text manifest to the image entrypoint so the returned vector geometry receives live SVG text before native drawing. Preserve raw vector output for inspection. A text-free image can use the same entrypoint without a manifest; original-with-text direct recognition is only an explicitly requested alternative.
 5. Validate the Master SVG, then follow the selected backend. An approved SVG can enter post-processing directly. Allocate the next `shibielujingN` basename with the bundled allocator.
 
+## Preferred playback: individual paths, maximum speed
+
+The user prefers one path object at a time with no artificial delay. On Windows PowerPoint, first prepare the complete native editable PPTX, then run `scripts/run_ppt_path_playback.ps1 -InputPptx <prepared.pptx> -OutputPptx <new-playback.pptx>`. This opens an isolated copy with paths hidden and makes each native shape visible in source order. Describe it accurately as sequential path visibility, not per-control-point creation. Never use repeated clipboard Copy/Paste for playback: it is slow and can alter fills. Never hide or modify objects in the user's existing deck.
+
+Keep compound paths intact, including their holes. Never show hidden mask or helper objects as artwork. Use first-to-last SVG order; bottom/background first, foreground and labels at their original depth. No sleep between paths. Report actual timing without promising a fixed frame rate; PowerPoint controls redraw. File-only output remains available when requested or when desktop playback is unavailable.
+
+This new playback helper is Windows PowerPoint only. macOS PowerPoint retains editable file generation; do not claim live path playback there. Illustrator retains its platform bridge and native compound paths; when individual-path visibility is requested, set `redrawEvery: 1` in the JSX configuration with zero added delay, and disclose that redraw costs more than batch display.
+
 ## Drawing routes and the four-platform matrix
 
 Read [references/backends.md](references/backends.md) for platform commands and verification status.
 Use [references/platform-contract.json](references/platform-contract.json) for shared defaults; `configure_runtime.py` writes the non-secret `runtime-profile.json`. Existing profiles do not override the fast PPT default.
 
-- **PowerPoint, Windows and macOS:** default to fast native OOXML (`run_cell_su7.py --application ppt`). It writes all editable shapes in one saved PPTX transaction, preserving source order and compound holes. Open the verified file after writing; this is not live per-path animation. Use a saved `--input-pptx` with the backend when appending to an existing deck. Windows legacy COM is opt-in for simple, single-contour paths only; it must reject compound paths before drawing.
+- **PowerPoint, Windows and macOS:** prepare with fast native OOXML (`run_cell_su7.py --application ppt`), then use the Windows individual-path playback helper by default where available. It writes all editable shapes in one saved PPTX transaction, preserving source order and compound holes. Open the verified file after writing; this is not live per-path animation. Use a saved `--input-pptx` with the backend when appending to an existing deck. Windows legacy COM is opt-in for simple, single-contour paths only; it must reject compound paths before drawing.
 - **Illustrator, Windows:** use the COM batch runtime through `run_cell_lct.ps1` or the cross-platform selector. Keep the already-open target document, source order and one session. Redraw once per batch of 20–50 atoms, rather than after every atom.
 - **Illustrator, macOS:** use `run_illustrator.py` through the selector. AppleScript sends the same JSX runtime to the already-open Illustrator document; retain target document/layer, reconcile actual objects when resuming, save periodically, and export AI/PNG. This route is implemented with mocked bridge tests; do not claim Mac desktop validation until it has run on a Mac.
 
