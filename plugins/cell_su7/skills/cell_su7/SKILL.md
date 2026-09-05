@@ -1,9 +1,9 @@
 ---
-name: cell_gd
-description: Reconstruct image-based scientific figures as editable PowerPoint or Adobe Illustrator artwork, recording text, removing lettering with an available image-editing model while preserving graphics, and restoring live editable text. Use for cell_gd, scientific diagrams, reference-image reconstruction and approved vector SVGs.
+name: cell_su7
+description: Reconstruct image-based scientific figures as editable PowerPoint or Adobe Illustrator artwork, recording text, removing lettering with an available image-editing model while preserving graphics, and restoring live editable text. Use for cell_su7, scientific diagrams, reference-image reconstruction and approved vector SVGs.
 ---
 
-# cell_gd
+# cell_su7
 
 `original image -> text manifest + model-cleaned image -> path-return SVG -> live text restoration -> PPT / Illustrator`
 
@@ -15,7 +15,7 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 
 ## Drawing routes
 
-- Windows, prepared image: `scripts/run_cell_gd.ps1 -InputImage <cleaned-image> -TextManifest <text.json> -OutputRoot <directory> -Application ppt|ai`. This dispatches to the matching original backend; normal rendering remains per-path, not a hidden completed-figure reveal.
+- Windows, prepared image: `scripts/run_cell_su7.ps1 -InputImage <cleaned-image> -TextManifest <text.json> -OutputRoot <directory> -Application ppt|ai`. This dispatches to the matching original backend; normal rendering remains per-path, not a hidden completed-figure reveal.
 - PPT: read [references/powerpoint-workflow.md](references/powerpoint-workflow.md), [references/backends.md](references/backends.md) and [references/platform-contract.json](references/platform-contract.json). Windows uses `run_from_image.ps1` / `run_from_svg.ps1`; macOS uses `run_from_image.py` / `run_from_svg.py`. Match the technical PPT backend with `configure_runtime.py` and `runtime-profile.json` automatically after the user chooses PPT. Native OOXML output is editable but does not provide live per-path screen drawing.
 - Illustrator: read [references/illustrator-workflow.md](references/illustrator-workflow.md) and [references/illustrator-runtime.md](references/illustrator-runtime.md). Use `run_illustrator_from_image.ps1` for images or `run_cell_lct.ps1` for approved SVGs. The existing live runtime requires Windows and an already-open Illustrator 2026 document. Do not launch, restart, focus, resize or close Illustrator. Do not silently switch an unsupported Illustrator environment to PPT.
 - Restore the recorded lettering as native text boxes in PPT and live text in Illustrator. Preserve native `<text>` already present in an approved SVG. Verify content, placement and styles; do not silently replace the recorded text with outlines.

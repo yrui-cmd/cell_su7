@@ -2,7 +2,7 @@
 
 ## Fixed drawing rules
 
-Treat this section as the finalized drawing baseline. Do not reinterpret, relax, or override it unless the user explicitly asks to update `cell_gd` itself.
+Treat this section as the finalized drawing baseline. Do not reinterpret, relax, or override it unless the user explicitly asks to update `cell_su7` itself.
 
 - Convert every path retained by the duplicate-path filter to a native editable PowerPoint object. Use WPS only as an explicitly experimental backend.
 - Sole filtering rule: remove exact duplicate drawing paths only. Preserve every non-duplicate path, including invisible, fully covered, and partially visible paths.

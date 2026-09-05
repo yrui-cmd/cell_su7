@@ -1,4 +1,4 @@
-# cell_gd
+# cell_su7
 
 保留文字为可编辑对象，使用模型去字后的图进行路径识别，使用者选择 **PPT 或 Adobe Illustrator**，随后沿用原 cell-ppt / cell-lct 的绘图与后处理。
 
@@ -14,7 +14,7 @@ PPT 保留原逐路径去重、绘制顺序、8 ms 间隔、已有对象保护�
 
 ## 安装
 
-Windows：运行 `setup.ps1`；macOS：运行 `bash setup.sh`。安装后的 skill 名和目录均为 `cell_gd`。本仓库统一提供 PPT 和 Adobe Illustrator 两个绘图后端，只需安装这一份。原 cell-ppt / cell-lct 独立仓库保持原有用途。
+Windows：运行 `setup.ps1`；macOS：运行 `bash setup.sh`。安装后的 skill 名和目录均为 `cell_su7`。本仓库统一提供 PPT 和 Adobe Illustrator 两个绘图后端，只需安装这一份。原 cell-ppt / cell-lct 独立仓库保持原有用途。
 
 Windows 支持 PPT 和 Illustrator；Illustrator 沿用已有 Windows / Illustrator 2026 运行要求，需先打开目标文档。macOS 沿用 PPT 的可编辑 OOXML 后端。
 
@@ -22,20 +22,20 @@ API 密钥配置和额度规则沿用原适配器。原有安全凭据命名空�
 
 ## 调用
 
-告诉 Codex：`用 cell_gd 处理这张原图，用 PPT 绘制。` 或 `用 cell_gd 处理这张原图，用 Adobe Illustrator 绘制。`
+告诉 Codex：`用 cell_su7 处理这张原图，用 PPT 绘制。` 或 `用 cell_su7 处理这张原图，用 Adobe Illustrator 绘制。`
 
 由 Codex 完成文字记录、模型去字和对照检查后，调用脚本入口（脚本本身不调用去字模型）：
 ```powershell
-.\plugins\cell_gd\skills\cell_gd\scripts\run_cell_gd.ps1 -InputImage .\cleaned.png -TextManifest .\text.json -OutputRoot .\output -Application ppt
+.\plugins\cell_su7\skills\cell_su7\scripts\run_cell_su7.ps1 -InputImage .\cleaned.png -TextManifest .\text.json -OutputRoot .\output -Application ppt
 ```
 把 `ppt` 改为 `ai` 选择 Illustrator。需要自定义放置、批次或续画时，使用各分支原运行脚本。已认可的 SVG 可直接进入后处理。
 
 macOS PPT：
 ```bash
-python plugins/cell_gd/skills/cell_gd/scripts/run_from_image.py --input-image cleaned.png --text-manifest text.json --output-root output
+python plugins/cell_su7/skills/cell_su7/scripts/run_from_image.py --input-image cleaned.png --text-manifest text.json --output-root output
 ```
 
-源码仓库：[yrui-cmd/cell_gd](https://github.com/yrui-cmd/cell_gd)。
+源码仓库：[yrui-cmd/cell_su7](https://github.com/yrui-cmd/cell_su7)。
 
 ## 余额显示
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cross-platform non-mutating cell_gd diagnostics."""
+"""Cross-platform non-mutating cell_su7 diagnostics."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def main() -> int:
     parser.add_argument("--verify-api", action="store_true")
     args = parser.parse_args()
     root = Path(__file__).resolve().parent
-    skill = root / "plugins" / "cell_gd" / "skills" / "cell_gd"
+    skill = root / "plugins" / "cell_su7" / "skills" / "cell_su7"
     required = [
         skill / "SKILL.md",
         skill / "scripts" / "run_cell_ppt.ps1",
@@ -67,7 +67,7 @@ def main() -> int:
             raise SystemExit("Xiaomiao API authentication failed.")
     result = {
         "ok": True,
-        "skill": "cell_gd",
+        "skill": "cell_su7",
         "platform": system.lower(),
         "backend": profile["backend"],
         "host": profile["host"],

@@ -1,4 +1,4 @@
-# cell_gd shared workflow
+# cell_su7 shared workflow
 
 For images containing lettering, follow [text-workflow.md](text-workflow.md): preserve the original, record the text, remove only text with an available image-editing model, visually verify unchanged graphics, recognize the cleaned image, and merge the recorded live text into the Master SVG before drawing. No particular image model is required. Text-free images can go directly to recognition.
 

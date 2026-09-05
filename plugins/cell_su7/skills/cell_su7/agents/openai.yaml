@@ -1,0 +1,4 @@
+interface:
+  display_name: "cell_su7"
+  short_description: "模型仅去文字并保留图形，回填可编辑文字，自选 PPT 或 Illustrator"
+  default_prompt: "Use $cell_su7 to preserve my figure graphics, restore editable text, and draw in my chosen PPT or Adobe Illustrator."

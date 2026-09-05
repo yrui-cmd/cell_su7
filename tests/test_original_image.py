@@ -8,7 +8,7 @@ import tempfile
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / 'plugins' / 'cell_gd' / 'skills' / 'cell_gd' / 'scripts'
+SCRIPTS = ROOT / 'plugins' / 'cell_su7' / 'skills' / 'cell_su7' / 'scripts'
 
 
 def main():

@@ -48,7 +48,7 @@ else
   "$python_bin" "$project_root/install.py"
 fi
 
-installed_skill="$HOME/.codex/skills/cell_gd"
+installed_skill="$HOME/.codex/skills/cell_su7"
 "$python_bin" "$installed_skill/scripts/configure_runtime.py" \
   --output "$installed_skill/runtime-profile.json"
 
@@ -65,4 +65,4 @@ fi
 doctor_args=()
 if [[ "$key_configured" == true ]]; then doctor_args+=(--verify-api); fi
 "$python_bin" "$project_root/doctor.py" "${doctor_args[@]}"
-printf '%s\n' "SETUP_OK|skill=cell_gd|platform=macos|runtime_matched=true|api_key_configured=$key_configured|restart_codex=true"
+printf '%s\n' "SETUP_OK|skill=cell_su7|platform=macos|runtime_matched=true|api_key_configured=$key_configured|restart_codex=true"

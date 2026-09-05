@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 from pptx import Presentation
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / 'plugins/cell_gd/skills/cell_gd/scripts'
+SCRIPTS = ROOT / 'plugins/cell_su7/skills/cell_su7/scripts'
 spec = importlib.util.spec_from_file_location('entry', SCRIPTS / 'run_from_image.py')
 entry = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(entry)
@@ -67,7 +67,7 @@ py -3 -X utf8 (Join-Path $PSScriptRoot 'prepare_illustrator_cache.py') --input $
 if ($LASTEXITCODE -ne 0) { throw 'Cache failed' }
 ''', encoding='utf-8-sig')
         for app in ['ppt', 'ai']:
-            proc = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(scripts / 'run_cell_gd.ps1'), '-InputImage', str(image), '-TextManifest', str(manifest), '-OutputRoot', str(work / app), '-Application', app], capture_output=True, text=True)
+            proc = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(scripts / 'run_cell_su7.ps1'), '-InputImage', str(image), '-TextManifest', str(manifest), '-OutputRoot', str(work / app), '-Application', app], capture_output=True, text=True)
             assert proc.returncode == 0, proc.stderr
             job = work / app / 'shibielujing1'
             check_master(job / 'shibielujing1-vector.svg', job / 'shibielujing1.svg')

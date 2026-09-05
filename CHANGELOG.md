@@ -3,11 +3,11 @@
 - Restore text recording, model-assisted removal of lettering, and native editable text reinsertion; no specific image model is required.
 - Save original canvas dimensions, label coordinates, bounds and baseline metadata in a per-job manifest; map source pixels to the vector canvas.
 - Correct PowerPoint text anchoring and rotation, and shared-pivot multiline SVG rotation. Add text-restoration and coordinate regression tests.
-- Retain remaining-credit reporting and both drawing backends in the standalone cell_gd repository.
+- Retain remaining-credit reporting and both drawing backends in the standalone cell_su7 repository.
 
-# 0.3.0 — cell_gd
+# 0.3.0 — cell_su7
 
-- Unify both distributions under cell_gd with user-selected PPT / Illustrator drawing.
+- Unify both distributions under cell_su7 with user-selected PPT / Illustrator drawing.
 - Send original images directly to path recognition; remove text cleanup and reinsertion.
 - Preserve backend-specific rendering, cache schemas, ordering and post-processing.
 
@@ -31,6 +31,6 @@
 
 ## 0.1.0 - 2026-08-27
 
-- Freeze the tested cell_gd PowerPoint drawing workflow.
+- Freeze the tested cell_su7 PowerPoint drawing workflow.
 - Add live editable text, native freeform paths, single-cache drawing, hidden-path culling, and existing-slide protection.
 - Add locked dependencies, DPAPI credential storage, package tests, PowerPoint end-to-end tests, release ZIP, and SHA256 verification.

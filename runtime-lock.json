@@ -17,7 +17,7 @@
   "codex": {
     "requiresDesktopApp": true,
     "requiresBuiltInImage2": false,
-    "skillId": "cell_gd"
+    "skillId": "cell_su7"
   },
   "runtimeContracts": {
     "geometryCacheSchema": 3,

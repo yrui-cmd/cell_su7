@@ -5,7 +5,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$skillRoot = Join-Path $repoRoot 'plugins\cell_gd\skills\cell_gd'
+$skillRoot = Join-Path $repoRoot 'plugins\cell_su7\skills\cell_su7'
 $fixture = Join-Path $PSScriptRoot 'fixtures\visibility.svg'
 $tempBase = Join-Path $repoRoot '.test-tmp'
 $tempRoot = Join-Path $tempBase ([Guid]::NewGuid().ToString('N'))

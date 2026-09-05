@@ -1,13 +1,13 @@
 {
-  "name": "cell_gd",
+  "name": "cell_su7",
   "version": "0.3.0",
   "description": "Editable PPT or Illustrator figures with model-assisted text removal and live text restoration.",
   "author": {
     "name": "yrui-cmd",
     "url": "https://github.com/yrui-cmd"
   },
-  "homepage": "https://github.com/yrui-cmd/cell_gd",
-  "repository": "https://github.com/yrui-cmd/cell_gd",
+  "homepage": "https://github.com/yrui-cmd/cell_su7",
+  "repository": "https://github.com/yrui-cmd/cell_su7",
   "license": "MIT",
   "keywords": [
     "powerpoint",
@@ -19,7 +19,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "cell_gd",
+    "displayName": "cell_su7",
     "shortDescription": "模型仅去文字，保留图形，回填可编辑文字",
     "longDescription": "Record original text, remove lettering using an available image model while preserving graphics, recognize vector paths, and restore live editable text in PPT or Illustrator.",
     "developerName": "yrui-cmd",
@@ -28,7 +28,7 @@
       "Interactive",
       "Write"
     ],
-    "websiteURL": "https://github.com/yrui-cmd/cell_gd",
-    "defaultPrompt": "Use cell_gd to preserve my figure graphics, restore editable text, and draw in my chosen PPT or Adobe Illustrator."
+    "websiteURL": "https://github.com/yrui-cmd/cell_su7",
+    "defaultPrompt": "Use cell_su7 to preserve my figure graphics, restore editable text, and draw in my chosen PPT or Adobe Illustrator."
   }
 }

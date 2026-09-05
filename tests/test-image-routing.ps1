@@ -1,8 +1,8 @@
 #requires -Version 5.1
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$scripts = Join-Path $root 'plugins\cell_gd\skills\cell_gd\scripts'
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('cell_gd-routing-' + [Guid]::NewGuid().ToString('N'))
+$scripts = Join-Path $root 'plugins\cell_su7\skills\cell_su7\scripts'
+$temp = Join-Path ([IO.Path]::GetTempPath()) ('cell_su7-routing-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $temp | Out-Null
 try {
     $testScripts = Join-Path $temp 'scripts'
@@ -31,7 +31,7 @@ Copy-Item -LiteralPath $env:CELL_GD_TEST_FIXTURE -Destination $OutputSvg
         $filename = if ($app -eq 'ppt') { 'run_from_image.ps1' } else { 'run_illustrator_from_image.ps1' }
         $stub = "param(`$InputImage, `$OutputRoot, `$EstimatedCredits, [switch]`$ApproveHighCost)`nWrite-Output '$app'"
         Set-Content (Join-Path $testScripts $filename) $stub
-        $result = & (Join-Path $testScripts 'run_cell_gd.ps1') -InputImage $image -OutputRoot $temp -Application $app
+        $result = & (Join-Path $testScripts 'run_cell_su7.ps1') -InputImage $image -OutputRoot $temp -Application $app
         if ($result -ne $app) { throw 'App dispatch mismatch.' }
     }
 }

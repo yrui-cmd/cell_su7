@@ -39,7 +39,7 @@ UTF-8 JSON, `schema_version: "1.0"`, and `text_elements` array:
 
 Pixel x/y are converted using `source_canvas` to the SVG viewBox, including its origin and scale. Use the baseline anchor, not the bounding-box top-left; `source_bbox` is a retained comparison reference, not an automatic replacement for the baseline. Normalized x/y are also supported and use the full unchanged canvas, with y at the text baseline. Normalized font size is a fraction of canvas height. Each id must be unique and distinct from geometry ids. `paint_order` selects the SVG insertion position; choose it to match source overlap (a large value places text above the geometry). A model's returned image must retain the original coordinate frame before reusing these positions.
 
-Windows selector: `run_cell_gd.ps1 -InputImage cleaned.png -TextManifest text.json -OutputRoot output -Application ppt` (or `ai`). Backend scripts also accept `-TextManifest`.
+Windows selector: `run_cell_su7.ps1 -InputImage cleaned.png -TextManifest text.json -OutputRoot output -Application ppt` (or `ai`). Backend scripts also accept `-TextManifest`.
 
 macOS PPT: `run_from_image.py --input-image cleaned.png --text-manifest text.json --output-root output`.
 

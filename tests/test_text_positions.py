@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from pptx import Presentation
 from pptx.enum.text import PP_ALIGN
 
-SCRIPTS = Path(__file__).resolve().parents[1] / 'plugins/cell_gd/skills/cell_gd/scripts'
+SCRIPTS = Path(__file__).resolve().parents[1] / 'plugins/cell_su7/skills/cell_su7/scripts'
 def load(name):
     spec = importlib.util.spec_from_file_location(name, SCRIPTS / f'{name}.py')
     module = importlib.util.module_from_spec(spec)

@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / 'plugins/cell_gd/skills/cell_gd/scripts'
+SCRIPTS = ROOT / 'plugins/cell_su7/skills/cell_su7/scripts'
 spec = importlib.util.spec_from_file_location('vectorizer', SCRIPTS / 'vectorize_xiaomiao.py')
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)

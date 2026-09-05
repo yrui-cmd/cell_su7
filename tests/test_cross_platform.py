@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic tests for the shared cell_gd core and OOXML backend."""
+"""Deterministic tests for the shared cell_su7 core and OOXML backend."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from pptx.util import Inches
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / "plugins" / "cell_gd" / "skills" / "cell_gd" / "scripts"
+SCRIPTS = ROOT / "plugins" / "cell_su7" / "skills" / "cell_su7" / "scripts"
 
 
 def run(*args: object, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -48,7 +48,7 @@ def main() -> int:
         reopened = Presentation(output)
         names = [shape.name for shape in reopened.slides[0].shapes]
         editable_text = [shape.text for shape in reopened.slides[0].shapes if getattr(shape, "has_text_frame", False)]
-        if "PREEXISTING_SENTINEL" not in names or "cell_gd" not in editable_text:
+        if "PREEXISTING_SENTINEL" not in names or "cell_su7" not in editable_text:
             raise AssertionError("Existing-object or editable-text preservation failed")
         with zipfile.ZipFile(output) as package:
             if any(name.startswith("ppt/media/") for name in package.namelist()):
@@ -56,7 +56,7 @@ def main() -> int:
 
         install_root = temp / "skills"
         run(sys.executable, ROOT / "install.py", "--destination", install_root)
-        if not (install_root / "cell_gd" / "SKILL.md").is_file():
+        if not (install_root / "cell_su7" / "SKILL.md").is_file():
             raise AssertionError("Cross-platform installer failed")
 
         gate = run(
