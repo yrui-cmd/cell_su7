@@ -1,4 +1,10 @@
-# Latest — editable text restoration
+# Latest — back-to-front playback
+
+- Explicitly require bottommost-first playback within and across batches.
+- Keep the first adjacent opaque duplicate instead of deleting earlier backgrounds; preserve cross-layer repetitions and transparency that affect compositing.
+- Clarify SVG cache order versus imported Illustrator collection order and add multi-batch background regression coverage.
+
+# Editable text restoration
 
 - Restore text recording, model-assisted removal of lettering, and native editable text reinsertion; no specific image model is required.
 - Save original canvas dimensions, label coordinates, bounds and baseline metadata in a per-job manifest; map source pixels to the vector canvas.

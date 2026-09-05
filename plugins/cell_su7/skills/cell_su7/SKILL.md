@@ -15,6 +15,10 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 
 ## Drawing routes
 
+**Draw from back to front: the actual bottommost layer first, then each successively higher layer.** If the source background/baseboard is bottommost, it must appear before the foreground artwork. Determine depth from the source stacking order, never from path size, color, screen coordinates or names. SVG/cache arrays run first-to-last; only already-imported Illustrator collections use the reverse traversal described in the runtime reference. Preserve this order within and across batches throughout playback, not only after completion.
+
+Remove genuinely redundant duplicate paths without delaying the first background. Collapse adjacent identical opaque paths by keeping the first. Do not treat a repeated shape separated by other layers, or translucent repeated paint, as redundant without proving that removing it preserves the composition. Before drawing, verify that the first cache atom and first batch match the source's bottommost rendered content; if the source stacking itself disagrees with the reference, inspect and correct that source before playback rather than blindly moving all white shapes to the back.
+
 If the canvas or application suddenly turns white during drawing, read [references/white-overlay-diagnostics.md](references/white-overlay-diagnostics.md) before changing visibility, deleting shapes or retrying playback. A white application window is not evidence of hidden geometry.
 
 - Windows, prepared image: `scripts/run_cell_su7.ps1 -InputImage <cleaned-image> -TextManifest <text.json> -OutputRoot <directory> -Application ppt|ai`. This dispatches to the matching original backend; normal rendering remains per-path, not a hidden completed-figure reveal.

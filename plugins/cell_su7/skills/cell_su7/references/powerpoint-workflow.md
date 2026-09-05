@@ -5,7 +5,7 @@
 Treat this section as the finalized drawing baseline. Do not reinterpret, relax, or override it unless the user explicitly asks to update `cell_su7` itself.
 
 - Convert every path retained by the duplicate-path filter to a native editable PowerPoint object. Use WPS only as an explicitly experimental backend.
-- The SVG parser excludes non-rendering elements such as display:none, hidden visibility and zero-opacity paint. Of the parsed drawing paths, remove exact duplicates only; retain non-duplicate fully covered and partially visible paths in source paint order. Covered geometry is different from a non-rendering element.
+- The SVG parser excludes non-rendering elements such as display:none, hidden visibility and zero-opacity paint. Only collapse adjacent, fully opaque, identical drawing paths, keeping the first. Preserve duplicates separated by other source objects and translucent duplicates: removing either occurrence can change playback or compositing. Retain other fully covered and partially visible paths in source paint order.
 - Apply that rule to actual drawing paths, including separate subpaths inside one source SVG element.
 - Put each retained drawing path into the cache exactly once. Draw it exactly once; never create a duplicate copy or a temporary covering layer.
 - Convert paths to editable freeform Bézier shapes, text to text boxes, and preserve paint order.
@@ -33,4 +33,4 @@ Treat this section as the finalized drawing baseline. Do not reinterpret, relax,
 
 ## Completion gate
 
-Do not report success until the Master SVG has no raster node, exact duplicates have been removed at drawing-path level, every non-duplicate path is retained, any native SVG text is preserved, retained paths are native freeforms, literal source order is correct, the PPTX reopens, and pre-existing content remains unchanged.
+Do not report success until the Master SVG has no raster node, safe redundant duplicates have been removed at drawing-path level, every non-duplicate path is retained, any native SVG text is preserved, retained paths are native freeforms, bottom-to-top source order is correct throughout playback, the PPTX reopens, and pre-existing content remains unchanged.

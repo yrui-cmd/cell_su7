@@ -72,19 +72,24 @@ def main():
     source_atoms = cache.get("atoms", [])
     atoms = expand_drawing_paths(source_atoms)
     keep = [True] * len(atoms)
-    seen = set()
     culled = []
-
-    for position in range(len(atoms) - 1, -1, -1):
-        atom = atoms[position]
+    previous_signature = None
+    for position, atom in enumerate(atoms):
         if atom.get("kind") == "text":
+            previous_signature = None
             continue
         atom_signature = signature(atom)
-        if atom_signature in seen:
+        paints = atom.get("paintParts") or []
+        opaque = bool(paints) and all(part.get("opacity") == 100 for part in paints)
+        # Only adjacent opaque duplicates are redundant throughout playback.
+        # A later repeated background may cover intervening shapes: deleting
+        # its first occurrence delays the background; deleting its last changes
+        # the final composition. Keep both when another source atom intervenes.
+        if opaque and atom_signature == previous_signature:
             keep[position] = False
             culled.append({"position": position, "source_index": atom.get("index"), "reason": "exact_duplicate"})
             continue
-        seen.add(atom_signature)
+        previous_signature = atom_signature if opaque else None
 
     kept_atoms = [atom for index, atom in enumerate(atoms) if keep[index]]
     if not kept_atoms:

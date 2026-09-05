@@ -24,8 +24,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Visibility culling failed.' }
 
     $cache = Get-Content -LiteralPath (Join-Path $cacheRoot 'geometry-cache.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ([int]$cache.source_total_drawing_paths -le [int]$cache.total_atoms) { throw 'Fixture did not remove its exact duplicate path.' }
-    if ([int]$cache.culled_atom_count -ne 1) { throw 'Only the exact duplicate path should be removed.' }
+    if ([int]$cache.source_total_drawing_paths -ne [int]$cache.total_atoms) { throw 'Separated source layers were removed.' }
+    if ([int]$cache.culled_atom_count -ne 0) { throw 'Non-adjacent duplicate backgrounds must remain in source order.' }
     if (@($cache.culled_atoms | Where-Object { $_.reason -ne 'exact_duplicate' }).Count -ne 0) { throw 'A non-duplicate path was removed.' }
     if (@($cache.atoms | Where-Object { $_.sourceId -eq 'green-hidden' }).Count -ne 1) { throw 'A covered non-duplicate path was not preserved.' }
     if (@($cache.atoms | Where-Object { $_.kind -ne 'text' -and $_.subpaths.Count -ne 1 }).Count -ne 0) { throw 'Drawing units were not normalized to one subpath.' }

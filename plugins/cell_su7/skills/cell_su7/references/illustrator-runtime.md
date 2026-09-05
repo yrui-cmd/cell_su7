@@ -20,7 +20,7 @@ SVG paint order and Illustrator collection indexes use opposite traversal direct
 - `pageItems[0]`: topmost.
 - `pageItems[pageItems.length - 1]`: bottommost.
 
-Traverse from the final index to `0`. Each newly created destination object is brought to the front, so later source layers remain above earlier layers.
+Only when reading an already imported Illustrator collection, traverse from the final index to `0`. The default cached workflow instead reads SVG atoms and batches in ascending source order; never reverse those arrays. Each newly created destination object is brought to the front, so later source layers remain above earlier layers.
 
 Never reorder by semantic labels such as background, outline, fill, detail, or text.
 
