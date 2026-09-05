@@ -12,13 +12,13 @@
 4. 对照原图检查图形、布局、配色、连线和画布尺寸未改变，再将去字图上传路径识别；把文字作为可编辑文本回填后进入绘图分支。
 5. PPT 保存可编辑 PPTX；Illustrator 保存 AI，并在完成后导出 PNG。
 
-PPT 保留原逐路径去重、绘制顺序、8 ms 间隔、已有对象保护及 macOS OOXML 后端。Illustrator 保留原缓存、20–50 对象批次、单连接续画、断点恢复、定时保存与最终导出。
+PPT 默认一次写入原生可编辑矢量，保留复合路径镂空，避免逐点 COM 绘制耗时。Illustrator 按 20–50 对象批次绘制、每批刷新，保留复合路径、续画和最终导出。
 
 ## 安装
 
 Windows：运行 `setup.ps1`；macOS：运行 `bash setup.sh`。安装后的 skill 名和目录均为 `cell_su7`。本仓库统一提供 PPT 和 Adobe Illustrator 两个绘图后端，只需安装这一份。原 cell-ppt / cell-lct 独立仓库保持原有用途。
 
-Windows 支持 PPT 和 Illustrator；Illustrator 沿用已有 Windows / Illustrator 2026 运行要求，需先打开目标文档。macOS 沿用 PPT 的可编辑 OOXML 后端。
+Windows / macOS 均提供 PPT 和 Illustrator 入口。Windows PPT 已用复杂图实测；Mac PPT 复用同一 OOXML 文件后端。Mac Illustrator 已实现 AppleScript 桥接，但仅完成模拟测试，尚未在 Mac 桌面实测。Illustrator 需先打开目标文档。
 
 API 密钥配置和额度规则沿用原适配器。原有安全凭据命名空间保持兼容。
 
@@ -44,3 +44,9 @@ python plugins/cell_su7/skills/cell_su7/scripts/run_from_image.py --input-image 
 每次图片识别完成后自动显示服务端返回的剩余额度，例如 `剩余额度：20`；余额为零显示 `剩余额度：0`。接口未提供有效余额时显示 `剩余额度：暂不可用`。Windows 的 PPT、Illustrator 和 macOS 图片入口均显示该信息，不额外发起计费请求。该数值是本次识别完成时的额度快照。
 
 文字清单随结果保存为 `text-manifest.json`。回填位置由原图坐标映射到 SVG 画布，再与图形使用同一套缩放和定位；最终逐段对照原图检查，字体替换造成的偏差需要校正。
+
+## 白板、顺序与性能修复（0.4.0）
+
+白板问题来自把带镂空的白色复合路径拆成独立填充，不能只靠移到底层解决。现在保持复合路径完整，按源文件从后往前排列；PPT 使用快速原生文件写入，Illustrator 每批刷新。旧版拆分缓存必须从 SVG 重新生成。四种运行组合及实测范围见 [平台说明](plugins/cell_su7/skills/cell_su7/references/backends.md)。
+
+跨平台入口：`python plugins/cell_su7/skills/cell_su7/scripts/run_cell_su7.py --input-image cleaned.png --text-manifest text.json --output-root output --application ppt`，`ppt` 可改为 `ai`。

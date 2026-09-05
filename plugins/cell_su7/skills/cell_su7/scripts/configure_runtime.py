@@ -28,20 +28,15 @@ def detect() -> dict:
     powerpoint = windows_progid_exists("PowerPoint.Application")
     wps = windows_progid_exists("KWPP.Application") or windows_progid_exists("WPP.Application")
     mac_powerpoint = Path("/Applications/Microsoft PowerPoint.app").exists() if system == "Darwin" else False
-    if system == "Windows" and powerpoint:
-        backend = "powerpoint-live-com"
-        host = "powerpoint"
-    elif system == "Windows" and wps:
-        backend = "wps-live-com-experimental"
-        host = "wps"
-    else:
-        backend = "editable-ooxml-saved-pptx"
-        host = "ooxml"
+    backend = "editable-ooxml-saved-pptx"
+    host = "ooxml"
     return {
         "schemaVersion": 1,
         "platform": system.lower(),
         "backend": backend,
         "host": host,
+        "illustratorBackend": "windows-com" if system == "Windows" else "macos-applescript" if system == "Darwin" else "unsupported",
+        "illustratorMacDesktopTested": False,
         "powerPointRegistered": powerpoint,
         "powerPointInstalledOnMac": mac_powerpoint,
         "wpsRegistered": wps,

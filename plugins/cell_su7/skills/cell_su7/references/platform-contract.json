@@ -18,13 +18,27 @@
     "macos": "Keychain:cell-ppt-xiaomiao"
   },
   "backends": {
-    "windows": "live-powerpoint-com",
+    "windows": "editable-ooxml-saved-pptx",
     "macos": "editable-ooxml-saved-pptx",
-    "wps": "experimental"
+    "wps": "experimental",
+    "illustratorWindows": "live-com",
+    "illustratorMacos": "applescript-jsx-unverified"
   },
   "powerPointCompatibility": {
-    "windows": ["2016", "2019", "2021", "LTSC 2021", "LTSC 2024", "Microsoft 365 desktop"],
-    "macos": ["2019", "2021", "2024", "Microsoft 365 desktop"],
+    "windows": [
+      "2016",
+      "2019",
+      "2021",
+      "LTSC 2021",
+      "LTSC 2024",
+      "Microsoft 365 desktop"
+    ],
+    "macos": [
+      "2019",
+      "2021",
+      "2024",
+      "Microsoft 365 desktop"
+    ],
     "notYearLocked": true
   },
   "installation": {
@@ -34,5 +48,6 @@
     "chatApiKeyAllowed": true,
     "credentialTransport": "stdin-only",
     "credentialVerification": "automatic-zero-credit"
-  }
+  },
+  "compoundPaths": "preserve-contours-and-holes"
 }

@@ -1,38 +1,15 @@
 #!/usr/bin/env python3
-"""Remove exact duplicate drawing paths from a Cell_ppt cache."""
+"""Remove safe adjacent opaque duplicate atoms, preserving compound contours."""
 
 from __future__ import annotations
 
 import argparse
-import copy
 import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 import prepare_geometry_cache as cache_builder
-
-
-def expand_drawing_paths(atoms):
-    """Make the culling unit identical to the native shape shown in PowerPoint."""
-    expanded = []
-    for atom in atoms:
-        subpaths = atom.get("subpaths") or []
-        if atom.get("kind") == "text" or len(subpaths) <= 1:
-            expanded.append(atom)
-            continue
-        paint_parts = atom.get("paintParts") or []
-        for subpath_index, subpath in enumerate(subpaths):
-            unit = copy.deepcopy(atom)
-            unit["subpaths"] = [subpath]
-            unit["sourceSubpathIndex"] = subpath_index
-            unit["objectName"] = f"{atom.get('objectName', 'PATH')}_SUB_{subpath_index:03d}"
-            unit["complexity"] = len(subpath.get("points") or [])
-            if paint_parts:
-                selected = paint_parts[subpath_index] if len(paint_parts) == len(subpaths) else paint_parts[0]
-                unit["paintParts"] = [copy.deepcopy(selected)]
-            expanded.append(unit)
-    return expanded
 
 
 def signature(atom):
@@ -70,7 +47,7 @@ def main():
     cache = json.loads(cache_path.read_text(encoding="utf-8-sig"))
     state = json.loads(state_path.read_text(encoding="utf-8-sig"))
     source_atoms = cache.get("atoms", [])
-    atoms = expand_drawing_paths(source_atoms)
+    atoms = list(source_atoms)  # Keep compound contours together: inner contours are holes.
     keep = [True] * len(atoms)
     culled = []
     previous_signature = None

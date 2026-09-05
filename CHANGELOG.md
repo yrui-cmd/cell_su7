@@ -1,3 +1,10 @@
+# 0.4.0 — compound holes, fast PPT and platform routing
+
+- Preserve compound contours in native PPT; reject unsafe legacy COM splitting.
+- Default PPT to atomic OOXML on both OSes; redraw Illustrator once per batch.
+- Add macOS Illustrator AppleScript bridge, resumable batch reconciliation and explicit validation status.
+- Validate the real 2,614-object example in Windows PowerPoint; Mac desktop tests remain outstanding.
+
 # Latest — back-to-front playback
 
 - Explicitly require bottommost-first playback within and across batches.

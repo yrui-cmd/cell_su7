@@ -36,6 +36,10 @@ jobs:
         run: python tests/test_text_positions.py
       - name: Test background and source paint order
         run: python tests/test_paint_order.py
+      - name: Preserve native compound holes
+        run: python tests/test_compound_holes.py
+      - name: Test macOS Illustrator bridge with mocked Apple Events
+        run: python tests/test_mac_illustrator.py
       - name: Test shared core and editable OOXML output
         run: python tests/test_cross_platform.py
 

@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 
 [CmdletBinding()]
 param()
@@ -28,7 +28,7 @@ try {
     if ([int]$cache.culled_atom_count -ne 0) { throw 'Non-adjacent duplicate backgrounds must remain in source order.' }
     if (@($cache.culled_atoms | Where-Object { $_.reason -ne 'exact_duplicate' }).Count -ne 0) { throw 'A non-duplicate path was removed.' }
     if (@($cache.atoms | Where-Object { $_.sourceId -eq 'green-hidden' }).Count -ne 1) { throw 'A covered non-duplicate path was not preserved.' }
-    if (@($cache.atoms | Where-Object { $_.kind -ne 'text' -and $_.subpaths.Count -ne 1 }).Count -ne 0) { throw 'Drawing units were not normalized to one subpath.' }
+    if (@($cache.atoms | Where-Object { $_.sourceId -eq 'multi-subpath' -and $_.subpaths.Count -eq 2 }).Count -ne 1) { throw 'Compound contours were split.' }
     if (@($cache.batches | Where-Object { $_.atomic_count -gt 50 }).Count -ne 0) { throw 'Batch size exceeded 50.' }
 
     $runtimeText = Get-Content -LiteralPath (Join-Path $skillRoot 'scripts\run_cell_ppt.ps1') -Raw -Encoding UTF8

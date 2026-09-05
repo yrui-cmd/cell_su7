@@ -17,6 +17,7 @@ def run(*args: str):
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--application", choices=["ppt", "ai"], default="ppt")
     parser.add_argument("--input-image", required=True, type=Path)
     parser.add_argument("--text-manifest", type=Path, help="Recorded original text; input image must already be text-free")
     parser.add_argument("--output-root", required=True, type=Path)
@@ -53,15 +54,14 @@ def main() -> int:
             "--text-manifest", str(args.text_manifest.resolve()), "--output-svg", str(master_svg))
     else:
         shutil.copyfile(raw_svg, master_svg)
-    command = [
-        str(scripts / "run_from_svg.py"),
-        "--input-svg", str(master_svg),
-        "--output-root", str(args.output_root.resolve()),
-        "--slide-index", str(args.slide_index),
-        "--job-name", base_name,
-    ]
-    if args.input_pptx:
-        command.extend(["--input-pptx", str(args.input_pptx.resolve())])
+    command = [str(scripts / ("run_from_svg.py" if args.application == "ppt" else "run_illustrator.py")),
+               "--input-svg", str(master_svg), "--output-root", str(args.output_root.resolve()), "--job-name", base_name]
+    if args.application == "ppt":
+        command.extend(["--slide-index", str(args.slide_index)])
+        if args.input_pptx:
+            command.extend(["--input-pptx", str(args.input_pptx.resolve())])
+    elif args.input_pptx:
+        raise ValueError("--input-pptx only applies to PowerPoint")
     run(*command)
     print(json.dumps({"ok": True, "base_name": base_name, "master_svg": str(master_svg)}, ensure_ascii=False, separators=(",", ":")))
     return 0

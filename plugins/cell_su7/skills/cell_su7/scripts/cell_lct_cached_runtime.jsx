@@ -364,51 +364,9 @@
     } catch (error) {
       try { created.remove(); } catch (cleanupError) {}
 
-      // Some provider SVGs contain one very large compound path with many
-      // disconnected, very short subpaths. Illustrator can reject a single
-      // child while constructing that compound path. Preserve the visible
-      // geometry by rebuilding its subpaths as native paths in one group.
-      var fallbackGroup = stagingLayer.groupItems.add();
-      var directFallbackPaths = [];
-      try {
-        for (index = 0; index < atom.subpaths.length; index += 1) {
-          var fallbackData = atom.subpaths[index];
-          if (!fallbackData.points || fallbackData.points.length < 2) continue;
-          var fallbackPath = stagingLayer.pathItems.add();
-          try {
-            writeGeometry(fallbackData, fallbackPath, viewBox, scale, originLeft, originTop);
-          } catch (fallbackFirstError) {
-            try { fallbackPath.remove(); } catch (fallbackCleanupError) {}
-            fallbackPath = stagingLayer.pathItems.add();
-            var fallbackMode = fallbackData.points.length <= 10 ? "incremental" : "entire";
-            writeGeometry(fallbackData, fallbackPath, viewBox, scale, originLeft, originTop, fallbackMode);
-          }
-          writeAppearance(style, fallbackPath, scale);
-          try {
-            fallbackPath.move(fallbackGroup, ElementPlacement.PLACEATEND);
-          } catch (fallbackMoveError) {
-            try {
-              fallbackPath.move(parent, ElementPlacement.PLACEATEND);
-              directFallbackPaths.push(fallbackPath);
-            } catch (fallbackParentMoveError) {
-              try { fallbackPath.remove(); } catch (fallbackMoveCleanupError) {}
-              fallbackPath = fallbackGroup.pathItems.add();
-              writeGeometry(fallbackData, fallbackPath, viewBox, scale, originLeft, originTop, "incremental");
-              writeAppearance(style, fallbackPath, scale);
-            }
-          }
-          fallbackPath.zOrder(ZOrderMethod.BRINGTOFRONT);
-        }
-        fallbackGroup.move(parent, ElementPlacement.PLACEATEND);
-        fallbackGroup.zOrder(ZOrderMethod.BRINGTOFRONT);
-        return fallbackGroup;
-      } catch (fallbackError) {
-        for (var directFallbackIndex = directFallbackPaths.length - 1; directFallbackIndex >= 0; directFallbackIndex -= 1) {
-          try { directFallbackPaths[directFallbackIndex].remove(); } catch (directFallbackCleanupError) {}
-        }
-        try { fallbackGroup.remove(); } catch (fallbackGroupCleanupError) {}
-        throw fallbackError;
-      }
+      // Never split compound fills: inner contours are holes.
+      throw new Error("COMPOUND_PATH_FAILED|" + error.message);
+
     }
   }
 
@@ -479,7 +437,7 @@
           }
         }
         createdCount += 1;
-        app.redraw();
+        if (config.redrawEvery && (createdCount % config.redrawEvery === 0)) app.redraw();
         // Long Illustrator 2026 sessions can retain native PathPoint proxies
         // until ExtendScript performs a collection, eventually surfacing a
         // PARM failure after many otherwise valid atoms. Collect periodically
@@ -501,6 +459,7 @@
         ].join("|");
       }
     }
+    app.redraw(); // One redraw per batch by default.
     return [
       "OK",
       "created=" + createdCount,
@@ -540,6 +499,18 @@
 
   try {
     if (app.documents.length < 1) return "ERROR|AI_DOCUMENT_REQUIRED";
+    if (config.operation === "normalize") {
+      var doc = findDocument(config.targetDocumentName);
+      var layer = findTargetLayer(doc);
+      var root = ensureRootGroup(doc, layer, config.rootGroupName);
+      for (var n = 0; n < config.batchGroupNames.length; n += 1) {
+        var batch = findNamedGroup(root, config.batchGroupNames[n]);
+        if (batch === null) throw new Error("MISSING_BATCH|" + config.batchGroupNames[n]);
+        batch.zOrder(ZOrderMethod.BRINGTOFRONT);
+      }
+      app.redraw();
+      return "OK|normalized";
+    }
     if (config.operation === "draw") return drawBatch();
     if (config.operation === "save") return saveAi();
     if (config.operation === "export") return exportPng();

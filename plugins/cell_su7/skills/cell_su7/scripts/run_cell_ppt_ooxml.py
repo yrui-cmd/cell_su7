@@ -61,16 +61,14 @@ def map_point(point, scale, offset_x, offset_y, view_x, view_y):
 
 def add_freeform(slide, subpath, paint, name, shape_id, transform):
     scale, offset_x, offset_y, view_x, view_y = transform
-    points = subpath["points"]
-    mapped = []
-    for point in points:
-        mapped.append(
-            {
-                "a": map_point(point["a"], scale, offset_x, offset_y, view_x, view_y),
-                "l": map_point(point["l"], scale, offset_x, offset_y, view_x, view_y),
-                "r": map_point(point["r"], scale, offset_x, offset_y, view_x, view_y),
-            }
-        )
+    source_paths = subpath.get("subpaths") or [subpath]
+    mapped_paths = []
+    for source in source_paths:
+        mapped = [{key: map_point(point[key], scale, offset_x, offset_y, view_x, view_y)
+                   for key in ("a", "l", "r")} for point in source["points"]]
+        if mapped:
+            mapped_paths.append((source, mapped))
+    mapped = [point for _, points in mapped_paths for point in points]
     all_xy = [coord for point in mapped for key in ("a", "l", "r") for coord in [point[key]]]
     min_x = min(p[0] for p in all_xy)
     min_y = min(p[1] for p in all_xy)
@@ -84,35 +82,37 @@ def add_freeform(slide, subpath, paint, name, shape_id, transform):
         y = round((point[1] - min_y) / height * PATH_EXTENT)
         return max(-2147483647, min(2147483647, x)), max(-2147483647, min(2147483647, y))
 
-    first_x, first_y = local(mapped[0]["a"])
-    commands = [f'<a:moveTo><a:pt x="{first_x}" y="{first_y}"/></a:moveTo>']
-    for idx in range(1, len(mapped)):
-        previous = mapped[idx - 1]
-        current = mapped[idx]
-        end_x, end_y = local(current["a"])
-        if same(previous["r"], previous["a"]) and same(current["l"], current["a"]):
-            commands.append(f'<a:lnTo><a:pt x="{end_x}" y="{end_y}"/></a:lnTo>')
-        else:
-            c1x, c1y = local(previous["r"])
-            c2x, c2y = local(current["l"])
-            commands.append(
-                f'<a:cubicBezTo><a:pt x="{c1x}" y="{c1y}"/>'
-                f'<a:pt x="{c2x}" y="{c2y}"/><a:pt x="{end_x}" y="{end_y}"/></a:cubicBezTo>'
-            )
-    if subpath.get("closed"):
-        previous = mapped[-1]
-        current = mapped[0]
-        if not (same(previous["r"], previous["a"]) and same(current["l"], current["a"])):
-            c1x, c1y = local(previous["r"])
-            c2x, c2y = local(current["l"])
-            commands.append(
-                f'<a:cubicBezTo><a:pt x="{c1x}" y="{c1y}"/>'
-                f'<a:pt x="{c2x}" y="{c2y}"/><a:pt x="{first_x}" y="{first_y}"/></a:cubicBezTo>'
-            )
-        commands.append("<a:close/>")
+    commands = []
+    for source, mapped in mapped_paths:
+        first_x, first_y = local(mapped[0]["a"])
+        commands.append(f'<a:moveTo><a:pt x="{first_x}" y="{first_y}"/></a:moveTo>')
+        for idx in range(1, len(mapped)):
+            previous = mapped[idx - 1]
+            current = mapped[idx]
+            end_x, end_y = local(current["a"])
+            if same(previous["r"], previous["a"]) and same(current["l"], current["a"]):
+                commands.append(f'<a:lnTo><a:pt x="{end_x}" y="{end_y}"/></a:lnTo>')
+            else:
+                c1x, c1y = local(previous["r"])
+                c2x, c2y = local(current["l"])
+                commands.append(
+                    f'<a:cubicBezTo><a:pt x="{c1x}" y="{c1y}"/>'
+                    f'<a:pt x="{c2x}" y="{c2y}"/><a:pt x="{end_x}" y="{end_y}"/></a:cubicBezTo>'
+                )
+        if source.get("closed"):
+            previous = mapped[-1]
+            current = mapped[0]
+            if not (same(previous["r"], previous["a"]) and same(current["l"], current["a"])):
+                c1x, c1y = local(previous["r"])
+                c2x, c2y = local(current["l"])
+                commands.append(
+                    f'<a:cubicBezTo><a:pt x="{c1x}" y="{c1y}"/>'
+                    f'<a:pt x="{c2x}" y="{c2y}"/><a:pt x="{first_x}" y="{first_y}"/></a:cubicBezTo>'
+                )
+            commands.append("<a:close/>")
 
     fill = "<a:noFill/>"
-    if paint.get("filled") and subpath.get("closed"):
+    if paint.get("filled") and any(source.get("closed") for source, _ in mapped_paths):
         fill = (
             f'<a:solidFill><a:srgbClr val="{rgb_hex(paint.get("fillColor"))}">'
             f'{alpha_xml(paint.get("opacity", 100))}</a:srgbClr></a:solidFill>'
@@ -195,6 +195,8 @@ def main() -> int:
     cache = json.loads(args.geometry_cache.read_text(encoding="utf-8"))
     if int(cache.get("schema_version", 0)) != 3:
         raise SystemExit("Unsupported geometry cache schema")
+    if any("sourceSubpathIndex" in atom for atom in cache.get("atoms", [])):
+        raise SystemExit("REBUILD_CACHE_REQUIRED: legacy cache split compound contours; rebuild from the original SVG")
     prs = Presentation(str(args.input_pptx)) if args.input_pptx else Presentation()
     if args.slide_index:
         if not 1 <= args.slide_index <= len(prs.slides):
@@ -221,21 +223,17 @@ def main() -> int:
                 created += 1
                 next_id += 1
             elif atom["kind"] == "path":
-                for part_index, subpath in enumerate(atom.get("subpaths", [])):
-                    if len(subpath.get("points", [])) < 2:
-                        continue
-                    paints = atom.get("paintParts") or [{}]
-                    paint = paints[min(part_index, len(paints) - 1)]
-                    add_freeform(
-                        slide,
-                        subpath,
-                        paint,
-                        f'{atom["objectName"]}_PART_{part_index:03d}',
-                        next_id,
-                        transform,
-                    )
-                    next_id += 1
+                paths = [path for path in atom.get("subpaths", []) if len(path.get("points", [])) >= 2]
+                if not paths:
+                    continue
+                for paint_index, paint in enumerate(atom.get("paintParts") or [{}]):
+                    if paint.get("filled") and paint.get("fillRule", "nonzero") != "nonzero":
+                        raise ValueError("Even-odd compound fill requires winding normalization before PPT export")
+                    add_freeform(slide, {"subpaths": paths}, paint,
+                                 f'{atom["objectName"]}_PAINT_{paint_index:03d}', next_id, transform)
                     created += 1
+                    next_id += 1
+
     args.output_pptx.parent.mkdir(parents=True, exist_ok=True)
     handle, temporary_name = tempfile.mkstemp(
         prefix=f".{args.output_pptx.stem}-",

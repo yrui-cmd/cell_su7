@@ -1,27 +1,24 @@
-# Presentation backends
+# Four platform combinations
 
-## Microsoft PowerPoint
+| Platform / application | Runtime | Validation status |
+|---|---|---|
+| Windows PowerPoint | Native OOXML file generation; optional simple-path COM | Complex 2,614-object sample opened and visually checked in PowerPoint; white compound holes preserved |
+| macOS PowerPoint | Same native OOXML file generation; open saved PPTX | Shared file/structure tests; actual Mac PowerPoint not tested here |
+| Windows Illustrator | Existing COM + native compound paths, one redraw per batch | Shared cache and JSX syntax tested; updated desktop drawing not yet revalidated |
+| macOS Illustrator | `osascript` Apple Events + same JSX compound/batch runtime | Bridge routing/resume tests mocked; actual Mac Illustrator not tested here |
 
-Use the unversioned `PowerPoint.Application` ProgID. Support PowerPoint 2016, 2019, 2021, LTSC 2021, LTSC 2024, and Microsoft 365 desktop on Windows; do not require or claim a special "2026" edition. These releases use the 16.x automation family needed by `Shapes.BuildFreeform`, `Shapes.AddTextbox`, and standard `.pptx` saving. Keep one COM application object and one presentation reference for the entire drawing job.
+## Commands
 
-## Microsoft PowerPoint on macOS
+`python scripts/run_cell_su7.py --input-image cleaned.png --text-manifest text.json --output-root output --application ppt`
 
-macOS does not expose Windows COM. Support PowerPoint 2019, 2021, 2024, and Microsoft 365 desktop editions that open standard `.pptx` files; do not require a "2026" edition. Use the bundled `run_cell_ppt_ooxml.py` backend against a saved `.pptx`: it appends native DrawingML custom-geometry shapes and native text boxes, preserves existing slide objects, saves once, and reopens the result for structural verification. It must not be described as live per-path drawing in the currently open PowerPoint window. If the user requires an existing deck, require its saved path and write a new output copy; never mutate an open unsaved document externally.
+Change `ppt` to `ai` for Illustrator. For approved vector input use `--input-svg master.svg` without `--text-manifest`.
 
-Use `setup.sh`, `install.py`, `doctor.py`, macOS Keychain, `xiaomiao.py`, `vectorize_xiaomiao.py`, `run_from_image.py`, and `run_from_svg.py` on macOS. Do not call Windows `.ps1` COM or DPAPI entry points there.
+Illustrator must already be running with the target document open. Windows uses `Illustrator.Application.30`; macOS resolves the installed app by bundle id `com.adobe.illustrator`. macOS may require Automation permission for the launching host to control Illustrator. A denied or unavailable bridge is an explicit failure, not permission to launch another app or silently fall back to raster artwork.
 
-## Automatic PPT backend selection
+PowerPoint file generation does not need PowerPoint running. To append to a saved deck, the lower-level PPT backend accepts `--input-pptx` and `--slide-index`; save to a new output path. The Windows legacy COM path remains available explicitly for simple non-compound illustrations. WPS is experimental and is not the default.
 
-This applies after the user chooses PPT, not to the PPT versus Illustrator decision.
+## Geometry and speed
 
-Installation runs `configure_runtime.py` and writes the non-secret `runtime-profile.json`. Use its selected host without asking the user: PowerPoint live COM first on Windows, experimental WPS COM second, editable OOXML fallback otherwise, and editable OOXML on macOS. Regenerate the profile automatically if it is missing or the machine environment changes.
+Keep compound contours together, source order unchanged, and native editable text. PPT is written once; Illustrator is redrawn once per 20–50-object batch. Do not use a white-cover workaround or split a failed compound into filled child shapes. Arbitrary masks, gradients, non-canvas clips and even-odd PPT fills require preprocessing or explicit rejection.
 
-## WPS Presentation
-
-Treat WPS as experimental. Try `KWPP.Application`, then `WPP.Application`. Use the same standard PowerPoint object model and save as `.pptx`. WPS editions differ in automation coverage. Require working `Presentations`, `Slides`, `Shapes.BuildFreeform`, `AddTextbox`, and `SaveAs`; if any required method is unavailable, stop and report the missing capability. Never describe WPS as stable until its live end-to-end suite passes on a declared WPS build.
-
-## Compatibility boundary
-
-Solid fills, solid strokes, cubic Bézier paths, basic opacity, rotations, and text boxes are supported. Gradients, masks, clipping paths, patterns, linked resources, embedded raster nodes, and compound-hole semantics require preprocessing or explicit rejection. Never conceal an unsupported feature by inserting the complete figure as an image.
-
-The Windows COM and macOS OOXML backends share geometry cache schema 3 and literal paint order. Their UI behavior differs: Windows can display each path as it is committed; macOS file-backed output becomes visible after the saved PPTX is opened or reloaded.
+AppleScript uses Illustrator's `do javascript` command on a JSX file. Reference: [Adobe-hosted scripting example](https://community.adobe.com/questions-652/how-to-pass-arguments-from-applescript-to-javascript-jsx-illustrator-extendscript-809731). Runtime availability must still be checked on the destination Mac.

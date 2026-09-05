@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 
 [CmdletBinding()]
 param(
@@ -93,6 +93,10 @@ if ([int]$cache.schema_version -ne 3) {
 }
 if ($cache.atoms.Count -lt 1) {
     throw 'Geometry cache contains no atoms.'
+}
+
+if (@($cache.atoms | Where-Object { ($_.kind -eq 'path' -and $_.subpaths.Count -gt 1) -or $null -ne $_.sourceSubpathIndex }).Count -gt 0) {
+    throw 'COMPOUND_PATH_REQUIRES_OOXML|Use the fast OOXML backend to preserve holes; COM per-subpath drawing would create opaque covers.'
 }
 
 $hostInfo = Open-PresentationHost $HostApplication

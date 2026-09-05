@@ -26,7 +26,7 @@ Never reorder by semantic labels such as background, outline, fill, detail, or t
 
 ## Compatibility
 
-- Required: Illustrator 2026 / version 30.x / `Illustrator.Application.30`.
+- Windows bridge: Illustrator 2026 / version 30.x / `Illustrator.Application.30`. macOS bridge: installed Illustrator via bundle id and AppleScript; actual Mac compatibility requires desktop validation.
 - Illustrator 2020 version 24.x can create a non-UI document but does not reliably expose imported child path points or mutable child visibility. Do not use it for this workflow.
 - Illustrator 2025 may work, but this skill's tested default is 2026.
 

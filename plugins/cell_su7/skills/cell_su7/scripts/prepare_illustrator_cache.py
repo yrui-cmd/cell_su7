@@ -615,7 +615,8 @@ def prepare(input_svg: Path, output_dir: Path, job_id: str, min_size: int, max_s
         cache = json.loads(cache_path.read_text(encoding="utf-8-sig"))
         state = json.loads(state_path.read_text(encoding="utf-8-sig"))
         compatible = (
-            cache.get("schema_version") == 3
+            cache.get("geometry_contract") == "compound-v1"
+            and cache.get("schema_version") == 3
             and cache.get("source_sha256") == source_hash
             and cache.get("job_id") == job_id
             and cache.get("min_batch_size") == min_size
@@ -632,13 +633,18 @@ def prepare(input_svg: Path, output_dir: Path, job_id: str, min_size: int, max_s
     root = tree.getroot()
     if local_name(root.tag) != "svg":
         raise ValueError("Input root must be <svg>")
-    validate_tree(root)
+    from canvas_clip import normalize_canvas_clip, assert_inside_canvas
     view_box = parse_canvas(root)
+    removed_canvas_clip = normalize_canvas_clip(root, view_box)
+    validate_tree(root)
     atoms = collect_atoms(root)
+    if removed_canvas_clip:
+        assert_inside_canvas(atoms, view_box)
     batches = build_batches(atoms, job_id, min_size, max_size, complex_threshold, max_points)
     validate_batch_contract(batches, atoms, min_size, max_size, complex_threshold)
     cache = {
         "schema_version": 3,
+        "geometry_contract": "compound-v1",
         "created_at": utc_now(),
         "source_svg": str(input_svg),
         "source_sha256": source_hash,

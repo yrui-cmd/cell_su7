@@ -1,6 +1,6 @@
 # Illustrator post-processing
 
-Use the original cached Illustrator runtime: `run_cell_lct.ps1`, `prepare_illustrator_cache.py`, and `cell_lct_cached_runtime.jsx`.
+Windows uses COM and macOS uses `run_illustrator.py` / AppleScript with the same cached JSX. Use the shared cached Illustrator runtime: `run_cell_lct.ps1`, `prepare_illustrator_cache.py`, and `cell_lct_cached_runtime.jsx`.
 Validate the API-returned SVG; preserve geometry, proportions and literal paint order. Parse the Master SVG once into `geometry-cache.json` and `playback.json`; reuse the immutable cache for every batch.
 Keep ordinary consecutive batches at 20–50 atoms. A whole job smaller than 20 may use one batch; only genuinely complex atoms may be singletons. Rebalance a short final batch and retry unchanged batches.
 Keep one Illustrator connection and the original target document throughout playback. Save periodically and at completion; export PNG once after all batches finish. Resume from the first incomplete batch without changing the target, placement or completed objects.
@@ -18,3 +18,5 @@ Keep one Illustrator connection and the original target document throughout play
 ## Completion
 
 Check complete vector geometry, no raster wrapper, correct paint order and proportions, one cache parse, compliant batches, one connection, unchanged existing artwork, saved AI, one final PNG export and visual correctness in Illustrator. For the text-restoration workflow, confirm that every recorded label is live editable text with correct content and placement, and that no residual outlined lettering is duplicated beneath it.
+
+Redraw once per batch by default. Preserve compound holes even on error: if native compound construction fails, stop with the atom incomplete rather than splitting its contours into opaque shapes. macOS bridge implementation has mocked tests only; actual Mac desktop behavior remains to be validated.

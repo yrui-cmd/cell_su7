@@ -24,6 +24,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($UseActivePresentation -and $HostApplication -in @('auto', 'ooxml')) {
+    throw 'UseActivePresentation requires an explicit live host (powerpoint or wps). For fast output preserving a saved deck, use run_cell_ppt_ooxml.py --input-pptx with a separate output path.'
+}
+
 $pythonCommand = Get-Command py -ErrorAction SilentlyContinue
 $pythonPrefix = @('-3', '-X', 'utf8')
 if (-not $pythonCommand) {
@@ -69,7 +74,7 @@ if (-not (Test-Path -LiteralPath $profilePath -PathType Leaf)) {
 $resolvedHost = $HostApplication
 if ($resolvedHost -eq 'auto') {
     $profile = Get-Content -LiteralPath $profilePath -Raw -Encoding UTF8 | ConvertFrom-Json
-    $resolvedHost = [string]$profile.host
+    $resolvedHost = 'ooxml'  # Fast native vector output preserves compound holes on both OSes.
 }
 if ($resolvedHost -eq 'ooxml') {
     & $pythonExe @pythonPrefix $ooxmlRuntime --geometry-cache (Join-Path $cacheRoot 'geometry-cache.json') --output-pptx $outputPptx | Out-Null
