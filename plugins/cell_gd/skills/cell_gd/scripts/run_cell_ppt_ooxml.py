@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import tempfile
 from pathlib import Path
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
+from pptx.enum.text import PP_ALIGN
 from pptx.oxml import parse_xml
 from pptx.oxml.ns import nsdecls
 from pptx.util import Emu, Pt
@@ -149,9 +151,18 @@ def add_text(slide, atom, transform):
         x -= width / 2.0
     elif anchor == "end":
         x -= width
+    top = y - size * 1.05
+    rotation = float(text.get("rotationDegrees", 0))
+    if rotation:
+        # Office rotates about the box centre; SVG rotates about the text anchor.
+        anchor_x, anchor_y = map_point(text["position"], scale, offset_x, offset_y, view_x, view_y)
+        dx, dy = x + width / 2 - anchor_x, top + height / 2 - anchor_y
+        angle = math.radians(rotation)
+        x = anchor_x + dx * math.cos(angle) - dy * math.sin(angle) - width / 2
+        top = anchor_y + dx * math.sin(angle) + dy * math.cos(angle) - height / 2
     shape = slide.shapes.add_textbox(
         Emu(round(x * EMU_PER_PT)),
-        Emu(round((y - size * 1.05) * EMU_PER_PT)),
+        Emu(round(top * EMU_PER_PT)),
         Emu(round(width * EMU_PER_PT)),
         Emu(round(height * EMU_PER_PT)),
     )
@@ -159,7 +170,9 @@ def add_text(slide, atom, transform):
     frame = shape.text_frame
     frame.clear()
     frame.margin_left = frame.margin_right = frame.margin_top = frame.margin_bottom = 0
+    frame.word_wrap = False
     paragraph = frame.paragraphs[0]
+    paragraph.alignment = {"middle": PP_ALIGN.CENTER, "end": PP_ALIGN.RIGHT}.get(anchor, PP_ALIGN.LEFT)
     run = paragraph.add_run()
     run.text = str(text["contents"])
     font = run.font
@@ -169,7 +182,7 @@ def add_text(slide, atom, transform):
     font.bold = weight == "bold" or (weight.isdigit() and int(weight) >= 600)
     font.italic = str(text.get("fontStyle", "")).lower() == "italic"
     font.color.rgb = RGBColor(*[int(v) for v in text.get("fillColor", [0, 0, 0])])
-    shape.rotation = float(text.get("rotationDegrees", 0))
+    shape.rotation = rotation
 
 
 def main() -> int:

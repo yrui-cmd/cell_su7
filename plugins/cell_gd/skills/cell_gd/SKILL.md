@@ -1,24 +1,24 @@
 ---
 name: cell_gd
-description: Convert an original PNG, JPEG or WebP directly through path recognition, then draw editable native objects in PowerPoint or Adobe Illustrator selected by the user. Use for cell_gd, scientific figures, reference-image reconstruction and editable vector drawing; also accepts approved vector SVGs.
+description: Reconstruct image-based scientific figures as editable PowerPoint or Adobe Illustrator artwork, recording text, removing lettering with an available image-editing model while preserving graphics, and restoring live editable text. Use for cell_gd, scientific diagrams, reference-image reconstruction and approved vector SVGs.
 ---
 
 # cell_gd
 
-`original image -> API path-return SVG -> selected PPT / Illustrator post-processing -> editable output`
+`original image -> text manifest + model-cleaned image -> path-return SVG -> live text restoration -> PPT / Illustrator`
 
-1. Preserve and submit the original image unchanged. Do not extract text, create a text manifest, remove lettering with Image 2, clean or redraw the image, or merge text back afterward. Text visible in the original is recognized with the rest of the image and may become vector outlines.
-2. Respect the user's choice of PPT or Adobe Illustrator. If they have not chosen, ask only `用 PPT 还是 Adobe Illustrator？` before starting a paid request. Do not substitute one application for the other automatically.
-3. Use the bundled API adapter for a fresh path result. Keep the complete reference in one upload. An approved SVG can enter the selected post-processing directly; do not replace a requested fresh API result with local tracing or an old SVG.
-4. Validate the returned SVG and retain its original geometry and paint order. No image-text extraction or reinsertion is performed after recognition either.
-5. Follow the selected original post-processing described below. Allocate the next `shibielujingN` basename with the bundled allocator.
+1. Preserve the original image. For images containing text, read [references/text-workflow.md](references/text-workflow.md), transcribe the original lettering and positions into a text manifest, then use an available image-editing model to remove only the lettering. No specific provider or model, including Image 2, is required.
+2. Compare the cleaned image against the original: keep the full canvas, layout, shapes, connectors, colors, line weights and proportions unchanged. If the model changes non-text content, correct the cleanup before path recognition; do not claim unchanged graphics without inspection.
+3. Respect the user's choice of PPT or Adobe Illustrator. If unspecified, ask `用 PPT 还是 Adobe Illustrator？` before a paid request.
+4. Submit the verified cleaned image with the bundled API adapter. Pass its original text manifest to the image entrypoint so the returned vector geometry receives live SVG text before native drawing. Preserve raw vector output for inspection. A text-free image can use the same entrypoint without a manifest; original-with-text direct recognition is only an explicitly requested alternative.
+5. Validate the Master SVG, then follow the selected backend. An approved SVG can enter post-processing directly. Allocate the next `shibielujingN` basename with the bundled allocator.
 
 ## Drawing routes
 
-- Windows, original image: `scripts/run_cell_gd.ps1 -InputImage <original> -OutputRoot <directory> -Application ppt|ai`. This dispatches to the matching original backend; normal rendering remains per-path, not a hidden completed-figure reveal.
+- Windows, prepared image: `scripts/run_cell_gd.ps1 -InputImage <cleaned-image> -TextManifest <text.json> -OutputRoot <directory> -Application ppt|ai`. This dispatches to the matching original backend; normal rendering remains per-path, not a hidden completed-figure reveal.
 - PPT: read [references/powerpoint-workflow.md](references/powerpoint-workflow.md), [references/backends.md](references/backends.md) and [references/platform-contract.json](references/platform-contract.json). Windows uses `run_from_image.ps1` / `run_from_svg.ps1`; macOS uses `run_from_image.py` / `run_from_svg.py`. Match the technical PPT backend with `configure_runtime.py` and `runtime-profile.json` automatically after the user chooses PPT. Native OOXML output is editable but does not provide live per-path screen drawing.
 - Illustrator: read [references/illustrator-workflow.md](references/illustrator-workflow.md) and [references/illustrator-runtime.md](references/illustrator-runtime.md). Use `run_illustrator_from_image.ps1` for images or `run_cell_lct.ps1` for approved SVGs. The existing live runtime requires Windows and an already-open Illustrator 2026 document. Do not launch, restart, focus, resize or close Illustrator. Do not silently switch an unsupported Illustrator environment to PPT.
-- Retain support for native `<text>` already present in an approved/API SVG. Do not promise editable text boxes for lettering recognized as paths from an image.
+- Restore the recorded lettering as native text boxes in PPT and live text in Illustrator. Preserve native `<text>` already present in an approved SVG. Verify content, placement and styles; do not silently replace the recorded text with outlines.
 
 ## Credential setup
 

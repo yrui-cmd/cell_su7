@@ -1,9 +1,11 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [string]$InputImage,
+
+    [string]$TextManifest,
 
     [Parameter(Mandatory = $true)]
     [string]$OutputRoot,
@@ -37,6 +39,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $inputPath = (Resolve-Path -LiteralPath $InputImage).Path
+$manifestPath = if ($TextManifest) { (Resolve-Path -LiteralPath $TextManifest).Path } else { $null }
 $outputRootPath = [IO.Path]::GetFullPath($OutputRoot)
 New-Item -ItemType Directory -Force -Path $outputRootPath | Out-Null
 
@@ -61,9 +64,21 @@ $outputSvg = Join-Path $jobRoot "$baseName.svg"
 $outputAi = Join-Path $jobRoot "$baseName.ai"
 $outputPng = Join-Path $jobRoot "$baseName.png"
 New-Item -ItemType Directory -Force -Path $jobRoot | Out-Null
+if ($manifestPath) {
+    $recordedManifest = Join-Path $jobRoot 'text-manifest.json'
+    Copy-Item -LiteralPath $manifestPath -Destination $recordedManifest
+    $manifestPath = $recordedManifest
+}
+
 
 & $vectorizer -InputImage $inputPath -OutputSvg $rawSvg -EstimatedCredits $EstimatedCredits -ApproveHighCost:$ApproveHighCost | Out-Null
-Copy-Item -LiteralPath $rawSvg -Destination $outputSvg
+if ($manifestPath) {
+    & py -3 -X utf8 (Join-Path $PSScriptRoot 'merge_live_text.py') --input-svg $rawSvg --text-manifest $manifestPath --output-svg $outputSvg | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Editable text merge failed.' }
+}
+else {
+    Copy-Item -LiteralPath $rawSvg -Destination $outputSvg
+}
 & py -3 -X utf8 (Join-Path $PSScriptRoot "validate_vector_svg.py") --svg $outputSvg | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "SVG validation failed." }
 
@@ -89,6 +104,7 @@ if ($DryRun) { $arguments.DryRun = $true }
     base_name = $baseName
     svg = $outputSvg
     vector_svg = $rawSvg
+    text_manifest = $manifestPath
     ai = $(if ($DryRun) { $null } else { $outputAi })
     png = $(if ($DryRun) { $null } else { $outputPng })
     work_dir = $internalRoot

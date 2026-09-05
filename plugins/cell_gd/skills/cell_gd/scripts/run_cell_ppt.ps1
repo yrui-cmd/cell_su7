@@ -158,6 +158,13 @@ try {
                 if ($text.textAnchor -eq 'middle') { $left -= $boxWidth / 2.0 }
                 elseif ($text.textAnchor -eq 'end') { $left -= $boxWidth }
                 $top = [double]$position[1] - ($fontSize * 1.05)
+                if ([double]$text.rotationDegrees -ne 0) {
+                    $angle = [double]$text.rotationDegrees * [math]::PI / 180.0
+                    $dx = $left + $boxWidth / 2.0 - [double]$position[0]
+                    $dy = $top + $boxHeight / 2.0 - [double]$position[1]
+                    $left = [double]$position[0] + $dx * [math]::Cos($angle) - $dy * [math]::Sin($angle) - $boxWidth / 2.0
+                    $top = [double]$position[1] + $dx * [math]::Sin($angle) + $dy * [math]::Cos($angle) - $boxHeight / 2.0
+                }
                 $shape = $slide.Shapes.AddTextbox(1, [single]$left, [single]$top, [single]$boxWidth, [single]$boxHeight)
                 $shape.Name = [string]$atom.objectName
                 $shape.Line.Visible = 0
@@ -167,6 +174,7 @@ try {
                 $shape.TextFrame2.MarginTop = 0
                 $shape.TextFrame2.MarginBottom = 0
                 $shape.TextFrame2.WordWrap = 0
+                $shape.TextFrame2.TextRange.ParagraphFormat.Alignment = if ($text.textAnchor -eq 'middle') { 2 } elseif ($text.textAnchor -eq 'end') { 3 } else { 1 }
                 $shape.TextFrame2.TextRange.Text = [string]$text.contents
                 $shape.TextFrame2.TextRange.Font.Name = [string]$text.fontFamily
                 $shape.TextFrame2.TextRange.Font.Size = [single]$fontSize

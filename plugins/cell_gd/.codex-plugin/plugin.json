@@ -1,7 +1,7 @@
 {
   "name": "cell_gd",
   "version": "0.3.0",
-  "description": "Original image to native editable PPT or Illustrator paths, without text preprocessing.",
+  "description": "Editable PPT or Illustrator figures with model-assisted text removal and live text restoration.",
   "author": {
     "name": "yrui-cmd",
     "url": "https://github.com/yrui-cmd"
@@ -20,8 +20,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "cell_gd",
-    "shortDescription": "原图直接识别路径，自选 PPT 或 Illustrator",
-    "longDescription": "Original image -> path recognition -> user-selected PowerPoint or Illustrator drawing, retaining the original backend post-processing.",
+    "shortDescription": "模型仅去文字，保留图形，回填可编辑文字",
+    "longDescription": "Record original text, remove lettering using an available image model while preserving graphics, recognize vector paths, and restore live editable text in PPT or Illustrator.",
     "developerName": "yrui-cmd",
     "category": "Productivity",
     "capabilities": [
@@ -29,6 +29,6 @@
       "Write"
     ],
     "websiteURL": "https://github.com/yrui-cmd/cell_gd",
-    "defaultPrompt": "Use cell_gd to recognize paths from my original image and draw in my chosen PPT or Adobe Illustrator."
+    "defaultPrompt": "Use cell_gd to preserve my figure graphics, restore editable text, and draw in my chosen PPT or Adobe Illustrator."
   }
 }

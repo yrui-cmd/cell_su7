@@ -1,6 +1,6 @@
 # cell_gd shared workflow
 
-Preserve the original PNG/JPEG/WebP and upload those bytes unchanged to the bundled path-recognition adapter. No OCR, text manifest, Image 2 cleanup, text removal or text reinsertion is part of this workflow. The path-return SVG becomes the Master SVG without a text merge. Recognized lettering may be outlined paths.
+For images containing lettering, follow [text-workflow.md](text-workflow.md): preserve the original, record the text, remove only text with an available image-editing model, visually verify unchanged graphics, recognize the cleaned image, and merge the recorded live text into the Master SVG before drawing. No particular image model is required. Text-free images can go directly to recognition.
 
 Validate true vector geometry, complete layout and proportions. Reject raster wrappers and unsupported geometry rather than silently flattening or dropping it. Choose PPT or Illustrator according to the user's selection, then follow `powerpoint-workflow.md` or `illustrator-workflow.md` without changing their drawing, caching, ordering, preservation, save or export behavior.
 

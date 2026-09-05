@@ -17,4 +17,4 @@ Keep one Illustrator connection and the original target document throughout play
 
 ## Completion
 
-Check complete vector geometry, no raster wrapper, correct paint order and proportions, one cache parse, compliant batches, one connection, unchanged existing artwork, saved AI, one final PNG export and visual correctness in Illustrator. Letter outlines returned by path recognition remain paths; native SVG text, if present, stays supported by the existing renderer. Do not reconstruct image text separately.
+Check complete vector geometry, no raster wrapper, correct paint order and proportions, one cache parse, compliant batches, one connection, unchanged existing artwork, saved AI, one final PNG export and visual correctness in Illustrator. For the text-restoration workflow, confirm that every recorded label is live editable text with correct content and placement, and that no residual outlined lettering is duplicated beneath it.

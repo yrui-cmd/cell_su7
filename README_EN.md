@@ -1,9 +1,9 @@
 # cell_gd
 
-Send the original PNG/JPEG/WebP directly to path recognition, then let the user choose PowerPoint or Adobe Illustrator. No text extraction, text manifest, Image 2 cleanup, or text reinsertion. Lettering recognized from images may remain vector paths.
+Record original lettering and positions, then use any available image-editing model to remove only the text. No specific model is required. Compare the result against the original to verify unchanged graphics, layout, colors and canvas. Send the cleaned image to path recognition and restore the recorded text as live editable objects before drawing in PowerPoint or Adobe Illustrator. Codex performs the model cleanup and visual comparison; the scripts consume the prepared image and text manifest.
 
-Both original repositories distribute the same self-contained `cell_gd` skill; install only one. Windows: run `setup.ps1`. macOS: run `bash setup.sh` for the editable PPTX backend. Illustrator retains its Windows / open Illustrator 2026 requirement.
+This standalone repository contains the complete `cell_gd` skill with both drawing backends. Windows: run `setup.ps1`. macOS: run `bash setup.sh` for the editable PPTX backend. Illustrator retains its Windows / open Illustrator 2026 requirement.
 
-Use `scripts/run_cell_gd.ps1 -InputImage original.png -OutputRoot output -Application ppt` or `-Application ai`. On macOS use `scripts/run_from_image.py --input-image original.png --output-root output`.
+Use `scripts/run_cell_gd.ps1 -InputImage cleaned.png -TextManifest text.json -OutputRoot output -Application ppt` or `-Application ai`. On macOS use `scripts/run_from_image.py --input-image cleaned.png --text-manifest text.json --output-root output`.
 
 PowerPoint retains exact-path deduplication, literal paint order, native editable objects, existing-artwork protection and OOXML output. Illustrator retains its cache, persistent connection, batching, resumable playback, periodic AI saving and final PNG export. The original secure credentials and credit gates remain in use.

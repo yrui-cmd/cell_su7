@@ -1,9 +1,11 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [string]$InputImage,
+
+    [string]$TextManifest,
 
     [Parameter(Mandatory = $true)]
     [string]$OutputRoot,
@@ -38,6 +40,7 @@ if (-not $pythonCommand) {
 if (-not $pythonCommand) { throw 'Python 3.11-3.14 was not found.' }
 $pythonExe = $pythonCommand.Source
 $inputPath = (Resolve-Path -LiteralPath $InputImage).Path
+$manifestPath = if ($TextManifest) { (Resolve-Path -LiteralPath $TextManifest).Path } else { $null }
 $outputRootPath = [IO.Path]::GetFullPath($OutputRoot)
 New-Item -ItemType Directory -Force -Path $outputRootPath | Out-Null
 
@@ -60,6 +63,12 @@ $rawSvg = Join-Path $jobRoot "$baseName-vector.svg"
 $masterSvg = Join-Path $jobRoot "$baseName.svg"
 $outputPptx = Join-Path $jobRoot "$baseName.pptx"
 New-Item -ItemType Directory -Force -Path $jobRoot | Out-Null
+if ($manifestPath) {
+    $recordedManifest = Join-Path $jobRoot 'text-manifest.json'
+    Copy-Item -LiteralPath $manifestPath -Destination $recordedManifest
+    $manifestPath = $recordedManifest
+}
+
 
 $vectorizerArgs = @{
     InputImage = $inputPath
@@ -68,7 +77,13 @@ $vectorizerArgs = @{
 }
 if ($ApproveHighCost) { $vectorizerArgs.ApproveHighCost = $true }
 & $vectorizer @vectorizerArgs | Out-Null
-Copy-Item -LiteralPath $rawSvg -Destination $masterSvg
+if ($manifestPath) {
+    & $pythonExe @pythonPrefix (Join-Path $PSScriptRoot 'merge_live_text.py') --input-svg $rawSvg --text-manifest $manifestPath --output-svg $masterSvg | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Editable text merge failed.' }
+}
+else {
+    Copy-Item -LiteralPath $rawSvg -Destination $masterSvg
+}
 & $pythonExe @pythonPrefix (Join-Path $PSScriptRoot 'validate_vector_svg.py') --svg $masterSvg | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'SVG validation failed.' }
 & $pythonExe @pythonPrefix $cacheBuilder --input $masterSvg --output-dir $cacheRoot --job-id $baseName | Out-Null
@@ -112,5 +127,6 @@ else {
     pptx = $outputPptx
     svg = $masterSvg
     vector_svg = $rawSvg
+    text_manifest = $manifestPath
     cache = (Join-Path $cacheRoot 'geometry-cache.json')
 } | ConvertTo-Json -Compress

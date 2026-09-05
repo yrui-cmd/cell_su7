@@ -30,6 +30,10 @@ jobs:
         run: python tests/test_original_image.py
       - name: Test balance reporting without API calls
         run: python tests/test_balance.py
+      - name: Test editable text restoration and positions
+        run: python tests/test_text_restoration.py
+      - name: Test text coordinate mapping
+        run: python tests/test_text_positions.py
       - name: Test shared core and editable OOXML output
         run: python tests/test_cross_platform.py
 

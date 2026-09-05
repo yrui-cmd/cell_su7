@@ -1,3 +1,10 @@
+# Latest — editable text restoration
+
+- Restore text recording, model-assisted removal of lettering, and native editable text reinsertion; no specific image model is required.
+- Save original canvas dimensions, label coordinates, bounds and baseline metadata in a per-job manifest; map source pixels to the vector canvas.
+- Correct PowerPoint text anchoring and rotation, and shared-pivot multiline SVG rotation. Add text-restoration and coordinate regression tests.
+- Retain remaining-credit reporting and both drawing backends in the standalone cell_gd repository.
+
 # 0.3.0 — cell_gd
 
 - Unify both distributions under cell_gd with user-selected PPT / Illustrator drawing.

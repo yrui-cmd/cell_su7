@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cross-platform original-image-to-editable-PPTX wrapper for macOS."""
+"""Image-to-editable-PPTX wrapper with optional live text restoration."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ def run(*args: str):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-image", required=True, type=Path)
+    parser.add_argument("--text-manifest", type=Path, help="Recorded original text; input image must already be text-free")
     parser.add_argument("--output-root", required=True, type=Path)
     parser.add_argument("--input-pptx", type=Path)
     parser.add_argument("--slide-index", type=int, default=0)
@@ -31,6 +32,11 @@ def main() -> int:
     ).strip().splitlines()[-1]
     job = args.output_root.resolve() / base_name
     job.mkdir(parents=True, exist_ok=True)
+    if args.text_manifest:
+        recorded_manifest = job / "text-manifest.json"
+        shutil.copyfile(args.text_manifest.resolve(), recorded_manifest)
+        args.text_manifest = recorded_manifest
+
     raw_svg = job / f"{base_name}-vector.svg"
     master_svg = job / f"{base_name}.svg"
     vector_command = [
@@ -42,7 +48,11 @@ def main() -> int:
     if args.approve_high_cost:
         vector_command.append("--approve-high-cost")
     run(*vector_command)
-    shutil.copyfile(raw_svg, master_svg)
+    if args.text_manifest:
+        run(str(scripts / "merge_live_text.py"), "--input-svg", str(raw_svg),
+            "--text-manifest", str(args.text_manifest.resolve()), "--output-svg", str(master_svg))
+    else:
+        shutil.copyfile(raw_svg, master_svg)
     command = [
         str(scripts / "run_from_svg.py"),
         "--input-svg", str(master_svg),
