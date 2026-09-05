@@ -14,7 +14,7 @@ PPT 保留原逐路径去重、绘制顺序、8 ms 间隔、已有对象保护�
 
 ## 安装
 
-Windows：运行 `setup.ps1`；macOS：运行 `bash setup.sh`。安装后的 skill 名和目录均为 `cell_gd`。两个原仓库提供同一个完整 skill，任选一个安装即可；不要同时安装同名副本。旧版不会被自动删除。
+Windows：运行 `setup.ps1`；macOS：运行 `bash setup.sh`。安装后的 skill 名和目录均为 `cell_gd`。本仓库统一提供 PPT 和 Adobe Illustrator 两个绘图后端，只需安装这一份。原 cell-ppt / cell-lct 独立仓库保持原有用途。
 
 Windows 支持 PPT 和 Illustrator；Illustrator 沿用已有 Windows / Illustrator 2026 运行要求，需先打开目标文档。macOS 沿用 PPT 的可编辑 OOXML 后端。
 
@@ -35,7 +35,7 @@ macOS PPT：
 python plugins/cell_gd/skills/cell_gd/scripts/run_from_image.py --input-image original.png --output-root output
 ```
 
-源码仓库：[yrui-cmd/cell-ppt](https://github.com/yrui-cmd/cell-ppt)。
+源码仓库：[yrui-cmd/cell_gd](https://github.com/yrui-cmd/cell_gd)。
 
 ## 余额显示
 

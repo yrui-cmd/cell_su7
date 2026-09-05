@@ -6,8 +6,8 @@
     "name": "yrui-cmd",
     "url": "https://github.com/yrui-cmd"
   },
-  "homepage": "https://github.com/yrui-cmd/cell-ppt",
-  "repository": "https://github.com/yrui-cmd/cell-ppt",
+  "homepage": "https://github.com/yrui-cmd/cell_gd",
+  "repository": "https://github.com/yrui-cmd/cell_gd",
   "license": "MIT",
   "keywords": [
     "powerpoint",
@@ -28,7 +28,7 @@
       "Interactive",
       "Write"
     ],
-    "websiteURL": "https://github.com/yrui-cmd/cell-ppt",
+    "websiteURL": "https://github.com/yrui-cmd/cell_gd",
     "defaultPrompt": "Use cell_gd to recognize paths from my original image and draw in my chosen PPT or Adobe Illustrator."
   }
 }
