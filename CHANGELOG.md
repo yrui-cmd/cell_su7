@@ -1,3 +1,9 @@
+# 0.4.4 — receive results and standalone cell_no_ai
+
+- Require waiting for and downloading watermark results before completion.
+- Introduce both functions for each user invocation; deliver received images directly.
+- Publish cell_no_ai independently at https://github.com/yrui-cmd/cell_no_ai.
+
 # 0.4.3 — bundled watermark dependency and balance preflight
 
 - Install cell_no_ai alongside cell_su7; preserve existing standalone installations.
