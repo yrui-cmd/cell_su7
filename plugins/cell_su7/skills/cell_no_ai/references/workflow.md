@@ -1,0 +1,16 @@
+# 操作顺序
+
+检测：打开官方验证网址 → 用户自行上传 → 结束。不自动检查文件。
+
+去水印：检查输入及文字保留偏好 → 读取正式只读余额 API → 显示余额和 1 额度费用 → 确认当前图片授权 → POST 提交一次 → 保存 job_id → GET 轮询 → completed 后 GET result → 下载并校验图片 → 返回路径及实际扣费。
+
+所有小描操作通过 [api.md](api.md) 指定的 API，不依赖浏览器会话、Cookie 或网页上传。若服务未开放、余额 API 不明确或实时余额未知，停止提交并说明，不用其他产品接口替代。余额契约见 api.md。
+
+结果记录仅包含 input_file、output_file、job_id、expires_at、status、credits_charged、服务返回的 balance_before/balance_after。未知字段为 null。检测状态默认为 not_checked，只有用户主动提供结果时才记录其结果。不得包含 API key 或令牌。
+
+## 不可跳过的顺序
+
+新任务必须为：同一 Key 查询实时可用余额成功 → 明确余额至少 1 → 显示余额及费用 → 有效授权 → 提交。任一步失败即不上传；“提交”指令不能替代查余额。未查到余额不创建任务，也不用服务器是否拒绝扣费来推测余额。已预留额度的原任务仅继续状态查询和领取，不得自动重新提交。
+
+
+余额查询采用已核实的 `GET /api/balance`，同一 Bearer Key；HTTP 200、ok=true、available_credits ≥ 1 才通过。

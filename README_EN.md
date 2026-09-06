@@ -9,3 +9,5 @@ Use `scripts/run_cell_su7.ps1 -InputImage cleaned.png -TextManifest text.json -O
 PowerPoint retains exact-path deduplication, literal paint order, native editable objects, existing-artwork protection and OOXML output. Illustrator retains its cache, persistent connection, batching, resumable playback, periodic AI saving and final PNG export. The original secure credentials and credit gates remain in use.
 
 PPT now defaults to fast native OOXML on both OSes, preserving compound holes. Illustrator refreshes per batch and never falls back to filled contour splitting. See the platform matrix in `references/backends.md` for validation limits.
+
+Installation includes the required **cell_no_ai** dependency as a separate skill. Existing standalone installations are preserved. For manual installation, copy both skill directories. Installing this dependency does not authorize paid processing: its live balance check and one-credit authorization remain required.

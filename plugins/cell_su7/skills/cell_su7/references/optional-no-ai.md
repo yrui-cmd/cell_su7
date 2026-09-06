@@ -12,7 +12,7 @@ Wait for an explicit answer. No answer is pending, never consent or a default no
 
 ## Yes
 
-1. Discover and read the installed `cell_no_ai` SKILL.md or its documented callable tool. Use its own authenticated submission, billing, status and download workflow; never invent an endpoint, command or response schema. This dependency is not bundled in cell_su7.
+1. Discover and read the installed `cell_no_ai` SKILL.md or its documented callable tool. Use its own authenticated submission, billing, status and download workflow; never invent an endpoint, command or response schema. This required dependency is bundled and installed alongside cell_su7. Always query its live balance before submitting.
 2. If unavailable, explain that the yes branch cannot run and request its installation path/repository or interface documentation. Keep the decision pending execution. Do not silently switch to no or call another paid service.
 3. Send the verified text-free image, not the original lettered image. Keep the original image and text manifest unchanged. Save the decision, input image identity and returned job identifier with the job, excluding credentials.
 4. Wait for successful completion and download the returned image. Resume/poll the same job on transient errors; do not resubmit or charge again merely because a request timed out. On failure, report it and preserve the pending workflow.
@@ -25,4 +25,4 @@ Do not call cell_no_ai and incur no extra watermark-treatment charge. Submit the
 
 ## Integration status
 
-The user-facing decision and continuation rules are installed. At this update, no local cell_no_ai skill or callable tool was found, so its submission/billing adapter has not been integrated or tested. A yes branch must wait for that dependency; documentation alone is not a working service connection.
+cell_no_ai is bundled as a separate required skill. Its documented GET /api/balance preflight must succeed before any paid submission. Installation does not authorize a charge.

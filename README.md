@@ -16,7 +16,7 @@ PPT 默认一次写入原生可编辑矢量，保留复合路径镂空，避免�
 
 ## 安装
 
-Windows：运行 `setup.ps1`；macOS：运行 `bash setup.sh`。安装后的 skill 名和目录均为 `cell_su7`。本仓库统一提供 PPT 和 Adobe Illustrator 两个绘图后端，只需安装这一份。原 cell-ppt / cell-lct 独立仓库保持原有用途。
+Windows：运行 `setup.ps1`；macOS：运行 `bash setup.sh`。安装后的 skill 名和目录均为 `cell_su7`。本仓库统一提供 PPT 和 Adobe Illustrator 两个绘图后端，运行一次安装即可。原 cell-ppt / cell-lct 独立仓库保持原有用途。
 
 Windows / macOS 均提供 PPT 和 Illustrator 入口。Windows PPT 已用复杂图实测；Mac PPT 复用同一 OOXML 文件后端。Mac Illustrator 已实现 AppleScript 桥接，但仅完成模拟测试，尚未在 Mac 桌面实测。Illustrator 需先打开目标文档。
 
@@ -54,3 +54,5 @@ python plugins/cell_su7/skills/cell_su7/scripts/run_from_image.py --input-image 
 ### 逐路径显示（Windows PowerPoint）
 
 默认先生成原生可编辑对象，再按原图层次逐个显示，零额外延时，不使用逐对象剪贴板复制。带镂空的复合路径保持完整。macOS PowerPoint 当前仍交付可编辑文件，未实现该可见播放入口。
+
+安装会同时安装必需依赖 **cell_no_ai**；插件包内包含两个独立 skill。已有的 cell_no_ai 会保留，不会覆盖。手动安装时请同时复制两个 skill 目录。安装依赖不代表同意付费去水印，提交前仍必须查询实时余额并确认 1 额度费用。

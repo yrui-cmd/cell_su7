@@ -1,3 +1,9 @@
+# 0.4.3 — bundled watermark dependency and balance preflight
+
+- Install cell_no_ai alongside cell_su7; preserve existing standalone installations.
+- Document GET /api/balance and require a valid available balance before submission.
+- Introduce both watermark functions when starting a new request.
+
 # 0.4.2 — optional pre-recognition cell_no_ai step
 
 - Ask after text removal and before recognition upload; yes authorizes one extra-credit treatment, no continues directly.

@@ -1,0 +1,6 @@
+interface:
+  display_name: cell_no_ai
+  short_description: 检测仅打开官方网址；去水印通过小描 API 查余额、提示费用并提交及领取结果
+  default_prompt: 使用 $cell_no_ai 打开官方检测网址，我自己粘贴图片。
+policy:
+  allow_implicit_invocation: true

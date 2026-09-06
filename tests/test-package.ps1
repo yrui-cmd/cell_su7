@@ -7,6 +7,8 @@ $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $pluginRoot = Join-Path $repoRoot 'plugins\cell_su7'
 $skillRoot = Join-Path $pluginRoot 'skills\cell_su7'
 $required = @(
+    'plugins\cell_su7\skills\cell_no_ai\SKILL.md',
+    'plugins\cell_su7\skills\cell_no_ai\references\api.md',
     'README.md', 'README_EN.md', 'LICENSE', 'CHANGELOG.md', '.gitignore',
     'setup.ps1', 'setup.sh', 'install.ps1', 'install.py', 'doctor.ps1', 'doctor.py',
     'build-release.ps1', 'requirements.lock', 'runtime-lock.json',
@@ -33,7 +35,7 @@ foreach ($forbidden in @('FROZEN-MANIFEST.json', 'update-frozen-manifest.ps1')) 
 }
 
 $plugin = Get-Content -LiteralPath (Join-Path $pluginRoot '.codex-plugin\plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-if ($plugin.name -ne 'cell_su7' -or $plugin.version -ne '0.4.2' -or $plugin.skills -ne './skills/' -or $plugin.license -ne 'MIT') { throw 'Plugin identity is invalid.' }
+if ($plugin.name -ne 'cell_su7' -or $plugin.version -ne '0.4.3' -or $plugin.skills -ne './skills/' -or $plugin.license -ne 'MIT') { throw 'Plugin identity is invalid.' }
 if ($plugin.interface.displayName -ne 'cell_su7' -or $plugin.author.name -ne 'yrui-cmd') { throw 'Plugin display identity is invalid.' }
 if (Test-Path -LiteralPath (Join-Path $repoRoot '.agents\plugins\marketplace.json')) { throw 'Marketplace metadata must not be included.' }
 
@@ -108,4 +110,4 @@ finally {
     }
 }
 
-Write-Output 'PACKAGE_OK|skill=cell_su7|version=0.4.2|platforms=windows,macos|freeze=removed|secret_scan=clean'
+Write-Output 'PACKAGE_OK|skill=cell_su7|version=0.4.3|platforms=windows,macos|freeze=removed|secret_scan=clean'
