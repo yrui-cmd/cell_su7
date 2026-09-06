@@ -48,6 +48,9 @@ def main() -> int:
         print(f"INSTALLED|skill=cell_no_ai|destination={dependency_target}|dependency=cell_su7")
     else:
         print(f"PRESERVED|skill=cell_no_ai|destination={dependency_target}|dependency=cell_su7")
+    update = subprocess.run([sys.executable, str(target / "scripts" / "sync_cell_no_ai.py"), "--destination", str(dependency_target)])
+    if update.returncode:
+        print("DEPENDENCY_UPDATE_PENDING|retry sync before watermark submission")
     subprocess.run(
         [sys.executable, str(target / "scripts" / "configure_runtime.py"), "--output", str(target / "runtime-profile.json")],
         check=True,

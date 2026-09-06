@@ -15,7 +15,9 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 
 ## Required installation dependency
 
-Install `cell_no_ai` alongside `cell_su7`. The plugin bundles both skill directories; `setup.ps1`, `setup.sh` and `install.py` install both on a fresh system and preserve an existing standalone `cell_no_ai`. When installing by copying directories, copy both siblings into the skills directory. If the dependency is missing, install the bundled `cell_no_ai` before using its watermark workflow. Installation alone never authorizes an API upload or charge; its real-time balance check and one-credit authorization still apply. It remains independently callable.
+`cell_no_ai` is required and remains independently callable. Before each new cell_su7 task, automatically run `python scripts/sync_cell_no_ai.py` using the configured runtime, then read the updated sibling `cell_no_ai/SKILL.md`. Installation runs the same check. Use the official repository main branch as the current source, including changes newer than release ZIPs. Do not wait for the user to remind you, and do not repeatedly check during the same job. Respect current cell_no_ai workflow and opening notices rather than copying old rules into this skill.
+
+The synchronizer backs up changed skill files, preserves credentials and unrelated files, and records the upstream commit. It accepts `--destination` for custom skill roots. If a network check fails, retry or resolve it; never claim the dependency is current without a successful check. Drawing without the optional watermark step may proceed, but resolve the update before a new watermark submission. Dependency updates do not authorize API charges. Existing jobs must still be received using the same job ID.
 
 ## Preferred playback: individual paths, maximum speed
 

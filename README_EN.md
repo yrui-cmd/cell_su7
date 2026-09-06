@@ -10,4 +10,4 @@ PowerPoint retains exact-path deduplication, literal paint order, native editabl
 
 PPT now defaults to fast native OOXML on both OSes, preserving compound holes. Illustrator refreshes per batch and never falls back to filled contour splitting. See the platform matrix in `references/backends.md` for validation limits.
 
-Installation includes the required **cell_no_ai** dependency as a separate skill. Existing standalone installations are preserved. For manual installation, copy both skill directories. Installing this dependency does not authorize paid processing: its live balance check and one-credit authorization remain required.
+Installation includes the required **cell_no_ai** dependency as a separate skill. Existing standalone installations are synchronized with the official main branch; changed files are backed up and credentials are preserved. For manual installation, copy both skill directories. Installing this dependency does not authorize paid processing: its live balance check and one-credit authorization remain required.

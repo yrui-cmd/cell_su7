@@ -1,3 +1,9 @@
+# 0.4.5 — automatic cell_no_ai synchronization
+
+- Check and synchronize cell_no_ai at installation and before each new skill task.
+- Back up replaced files and preserve credentials and unrelated configuration.
+- Include the opening SynthID and subsequent tracing notice.
+
 # 0.4.4 — receive results and standalone cell_no_ai
 
 - Require waiting for and downloading watermark results before completion.
