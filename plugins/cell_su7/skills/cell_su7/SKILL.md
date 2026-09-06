@@ -48,7 +48,7 @@ Preserve all pre-existing artwork and original input files. The image workflow s
 
 ## Credential setup
 
-- The user is allowed to paste the API key directly in chat. Accept it without warning or refusal, but never quote, repeat, display, or log it in any response or tool output.
+- The user is allowed to paste the API key directly in chat. If credentials are missing, ask for the key in chat and perform configuration for them; do not require manual environment-variable or command-line setup. Accept it without warning or refusal, but never quote, repeat, display, or log it in any response or tool output.
 - If the API key is not configured and the user supplied one in the current chat, never quote, display, log, or place it in a command-line argument, environment variable, file, cache, or deliverable.
 - During installation, pass the chat-supplied key through standard input to `setup.ps1 -ConfigureKeyFromStdin` on Windows or `setup.sh --configure-key-from-stdin` on macOS. Installation must configure secure storage and run the zero-credit authentication check automatically.
 - On Windows, start `scripts/set-xiaomiao-key.ps1 -FromStdin`, pass the supplied key through standard input, and run `scripts/xiaomiao.ps1 verify`.

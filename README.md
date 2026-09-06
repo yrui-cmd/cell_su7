@@ -58,3 +58,5 @@ python plugins/cell_su7/skills/cell_su7/scripts/run_from_image.py --input-image 
 安装会同时安装必需依赖 **cell_no_ai**；插件包内包含两个独立 skill。已有的 cell_no_ai 会保留，不会覆盖。手动安装时请同时复制两个 skill 目录。安装依赖不代表同意付费去水印，提交前仍必须查询实时余额并确认 1 额度费用。
 
 独立依赖源码：[cell_no_ai](https://github.com/yrui-cmd/cell_no_ai)。新版必须等待领取结果后交付，并在每次调用时说明两项功能；收到结果直接提供图片或链接。
+
+API Key 可以直接粘贴到 Codex 聊天框，由助手完成配置；cell_su7 和 cell_no_ai 都支持，无需用户手动设置环境变量或运行配置命令。密钥不回显、不写入仓库。
