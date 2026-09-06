@@ -5,12 +5,12 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 
 # cell_su7
 
-`original image -> text manifest + model-cleaned image -> path-return SVG -> live text restoration -> PPT / Illustrator`
+`original image -> text manifest + model-cleaned image -> optional confirmed cell_no_ai processing -> path-return SVG -> live text restoration -> PPT / Illustrator`
 
 1. Preserve the original image. For images containing text, read [references/text-workflow.md](references/text-workflow.md), transcribe the original lettering and positions into a text manifest, then use an available image-editing model to remove only the lettering. No specific provider or model, including Image 2, is required.
 2. Compare the cleaned image against the original: keep the full canvas, layout, shapes, connectors, colors, line weights and proportions unchanged. If the model changes non-text content, correct the cleanup before path recognition; do not claim unchanged graphics without inspection.
 3. Respect the user's choice of PPT or Adobe Illustrator. If unspecified, ask `用 PPT 还是 Adobe Illustrator？` before a paid request.
-4. Submit the verified cleaned image with the bundled API adapter. Pass its original text manifest to the image entrypoint so the returned vector geometry receives live SVG text before native drawing. Preserve raw vector output for inspection. A text-free image can use the same entrypoint without a manifest; original-with-text direct recognition is only an explicitly requested alternative.
+4. Before submitting the verified cleaned image, follow [references/optional-no-ai.md](references/optional-no-ai.md): ask whether to use the additional 1-credit cell_no_ai treatment and wait for an explicit answer. If yes, wait for the returned processed image and use it as recognition input; if no, use the cleaned image directly. Then submit the selected image with the bundled API adapter. Pass its original text manifest to the image entrypoint so the returned vector geometry receives live SVG text before native drawing. Preserve raw vector output for inspection. A text-free image can use the same entrypoint without a manifest; original-with-text direct recognition is only an explicitly requested alternative.
 5. Validate the Master SVG, then follow the selected backend. An approved SVG can enter post-processing directly. Allocate the next `shibielujingN` basename with the bundled allocator.
 
 ## Preferred playback: individual paths, maximum speed

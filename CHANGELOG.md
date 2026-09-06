@@ -1,3 +1,9 @@
+# 0.4.2 — optional pre-recognition cell_no_ai step
+
+- Ask after text removal and before recognition upload; yes authorizes one extra-credit treatment, no continues directly.
+- Wait for returned imagery, preserve text coordinates, and resume the same service job.
+- cell_no_ai dependency is currently unavailable; the yes branch pauses rather than pretending to call it.
+
 # 0.4.1 — individual-path playback
 
 - Prefer zero-delay sequential native-path display on Windows PowerPoint.
