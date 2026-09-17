@@ -5,19 +5,25 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 
 # cell_su7
 
-`original image -> text manifest + model-cleaned image -> optional confirmed cell_no_ai processing -> path-return SVG -> live text restoration -> PPT / Illustrator`
+`original image -> text manifest + model-cleaned image -> optional confirmed cell_no_ai processing -> mandatory cell_high_solution faithful enhancement after no-ai -> path-return SVG -> live text restoration -> PPT / Illustrator`
 
 1. Preserve the original image. For images containing text, read [references/text-workflow.md](references/text-workflow.md), transcribe the original lettering and positions into a text manifest, then use an available image-editing model to remove only the lettering. No specific provider or model, including Image 2, is required.
 2. Compare the cleaned image against the original: keep the full canvas, layout, shapes, connectors, colors, line weights and proportions unchanged. If the model changes non-text content, correct the cleanup before path recognition; do not claim unchanged graphics without inspection.
 3. Respect the user's choice of PPT or Adobe Illustrator. If unspecified, ask `用 PPT 还是 Adobe Illustrator？` before a paid request.
-4. Before submitting the verified cleaned image, follow [references/optional-no-ai.md](references/optional-no-ai.md): ask whether to use the additional 1-credit cell_no_ai treatment and wait for an explicit answer. If yes, wait for the returned processed image and use it as recognition input; if no, use the cleaned image directly. Then submit the selected image with the bundled API adapter. Pass its original text manifest to the image entrypoint so the returned vector geometry receives live SVG text before native drawing. Preserve raw vector output for inspection. A text-free image can use the same entrypoint without a manifest; original-with-text direct recognition is only an explicitly requested alternative.
+4. Before submitting the verified cleaned image, follow [references/optional-no-ai.md](references/optional-no-ai.md): ask whether to use the additional 1-credit cell_no_ai treatment and wait for an explicit answer. If yes, wait for and download the actual cell_no_ai result, then read the installed `cell-high-solution/SKILL.md` (display name `cell_high_solution`) and run its deterministic enhancer with `--mode faithful`. Wait for a valid enhanced PNG and use that PNG as recognition input; never trace the unenhanced no-ai output. If no, use the cleaned image directly. Then submit the selected image with the bundled API adapter. Pass its original text manifest to the image entrypoint so the returned vector geometry receives live SVG text before native drawing. Preserve raw vector output for inspection. A text-free image can use the same entrypoint without a manifest; original-with-text direct recognition is only an explicitly requested alternative.
 5. Validate the Master SVG, then follow the selected backend. An approved SVG can enter post-processing directly. Allocate the next `shibielujingN` basename with the bundled allocator.
 
 ## Required installation dependency
 
 `cell_no_ai` is required and remains independently callable. Before each new cell_su7 task, automatically run `python scripts/sync_cell_no_ai.py` using the configured runtime, then read the updated sibling `cell_no_ai/SKILL.md`. Installation runs the same check. Use the official repository main branch as the current source, including changes newer than release ZIPs. Do not wait for the user to remind you, and do not repeatedly check during the same job. Respect current cell_no_ai workflow and opening notices rather than copying old rules into this skill.
 
-The synchronizer backs up changed skill files, preserves credentials and unrelated files, and records the upstream commit. It accepts `--destination` for custom skill roots. If a network check fails, retry or resolve it; never claim the dependency is current without a successful check. Drawing without the optional watermark step may proceed, but resolve the update before a new watermark submission. Dependency updates do not authorize API charges. Existing jobs must still be received using the same job ID.
+The synchronizer backs up changed skill files, preserves credentials and unrelated files, and records the upstream revision. It accepts `--destination` for custom skill roots. If a network check fails, retry or resolve it; never claim the dependency is current without a successful check. Drawing without the optional watermark step may proceed, but resolve the update before a new watermark submission. Dependency updates do not authorize API charges. Existing jobs must still be received using the same job ID.
+
+## Required enhancement after no-ai
+
+The yes branch requires the separately installed `cell-high-solution` skill, displayed as `cell_high_solution`. Resolve its current runtime and command from its SKILL.md; use `--mode faithful` to preserve scientific structures. Save the original, no-ai output, and enhanced PNG separately. Do not continue to recognition if enhancement fails or is unavailable; resolve the dependency/error and resume from the saved no-ai output without resubmitting no-ai. This requirement does not trigger no-ai charges for recoloring existing artwork or for the no branch.
+
+Check that enhancement preserves the full canvas aspect ratio and alignment. Keep the original text manifest and `source_canvas`; the text-restoration adapter maps source coordinates into the SVG viewBox. Do not replace `source_canvas` with the enlarged dimensions while retaining old pixel coordinates.
 
 ## Preferred playback: individual paths, maximum speed
 

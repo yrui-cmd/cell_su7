@@ -30,6 +30,8 @@ jobs:
         run: python tests/test_original_image.py
       - name: Test balance reporting without API calls
         run: python tests/test_balance.py
+      - name: Test cell_no_ai archive synchronization fallback
+        run: python tests/test_sync_cell_no_ai.py
       - name: Test editable text restoration and positions
         run: python tests/test_text_restoration.py
       - name: Test text coordinate mapping

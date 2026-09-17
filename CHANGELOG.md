@@ -1,3 +1,9 @@
+# 0.4.6 — faithful enhancement after cell_no_ai
+
+- Require the downloaded cell_no_ai result to pass through the separately installed cell_high_solution faithful route before path recognition.
+- Preserve the original text manifest and source canvas while validating enhanced-image alignment.
+- Add a codeload fallback when Git cannot synchronize the latest cell_no_ai main branch.
+
 # 0.4.5 — automatic cell_no_ai synchronization
 
 - Check and synchronize cell_no_ai at installation and before each new skill task.
