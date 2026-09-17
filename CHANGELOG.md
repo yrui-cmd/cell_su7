@@ -1,3 +1,9 @@
+# 0.4.7 — faithful enhancement for both watermark branches
+
+- Require cell_high_solution faithful enhancement before path recognition whether cell_no_ai is accepted or declined.
+- Keep the no branch free of cell_no_ai charges while prohibiting direct recognition of the unenhanced cleaned image.
+- Preserve the original text manifest and source canvas across both enhancement routes.
+
 # 0.4.6 — faithful enhancement after cell_no_ai
 
 - Require the downloaded cell_no_ai result to pass through the separately installed cell_high_solution faithful route before path recognition.

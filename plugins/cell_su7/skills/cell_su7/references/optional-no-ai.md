@@ -4,7 +4,7 @@ This branch is requested by the user. It runs after text removal and visual chec
 
 ## Ask once for this image
 
-Ask: “是否彻底消除 AI 水印？选择‘是’将调用 cell_no_ai 进行额外处理，需额外扣除 1 个额度，返回图片后先用 cell_high_solution 保真高清修复，再继续描摹；选择‘否’则直接继续。”
+Ask: “是否彻底消除 AI 水印？选择‘是’将调用 cell_no_ai 进行额外处理，需额外扣除 1 个额度；选择‘否’则跳过去水印。无论选择是或否，路径识别前都必须先用 cell_high_solution 保真高清修复。”
 
 Explain if needed: AI image provenance can involve different marking mechanisms; tracing does not guarantee removal of every type. Do not assert every image contains exactly two watermark types, that tracing always removes one, or that the additional service guarantees complete removal without authoritative evidence. The question describes the user's requested treatment goal, not a verified outcome.
 
@@ -22,8 +22,8 @@ Wait for an explicit answer. No answer is pending, never consent or a default no
 
 ## No
 
-Do not call cell_no_ai and incur no extra watermark-treatment charge. Submit the already-verified cleaned image directly to the existing recognition workflow, retaining the same text manifest.
+Do not call cell_no_ai and incur no extra watermark-treatment charge. Read the separately installed `cell-high-solution/SKILL.md`, run its bundled enhancer once on the already-verified cleaned image with `--mode faithful`, and wait for a valid enhanced PNG. Verify unchanged aspect ratio, layout and alignment, then use that enhanced PNG—not the unenhanced cleaned image—as path-recognition input. Retain the original text manifest and `source_canvas`.
 
 ## Integration contract
 
-Required order for the approved branch: text-free image -> cell_no_ai downloaded result -> cell_high_solution faithful PNG -> path recognition -> editable text restoration. `cell_no_ai` is bundled as a separate required skill; `cell-high-solution` is an external local dependency whose command must be resolved from its installed skill. This update defines orchestration and does not claim a new paid end-to-end test.
+Required yes order: text-free image -> cell_no_ai downloaded result -> cell_high_solution faithful PNG -> path recognition -> editable text restoration. Required no order: text-free image -> cell_high_solution faithful PNG -> path recognition -> editable text restoration. Both branches must use the enhanced PNG. `cell_no_ai` is bundled as a separate required skill; `cell-high-solution` is an external local dependency whose command must be resolved from its installed skill. This update defines orchestration and does not claim a new paid end-to-end test.

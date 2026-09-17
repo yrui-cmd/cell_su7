@@ -35,7 +35,7 @@ foreach ($forbidden in @('FROZEN-MANIFEST.json', 'update-frozen-manifest.ps1')) 
 }
 
 $plugin = Get-Content -LiteralPath (Join-Path $pluginRoot '.codex-plugin\plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-if ($plugin.name -ne 'cell_su7' -or $plugin.version -ne '0.4.6' -or $plugin.skills -ne './skills/' -or $plugin.license -ne 'MIT') { throw 'Plugin identity is invalid.' }
+if ($plugin.name -ne 'cell_su7' -or $plugin.version -ne '0.4.7' -or $plugin.skills -ne './skills/' -or $plugin.license -ne 'MIT') { throw 'Plugin identity is invalid.' }
 if ($plugin.interface.displayName -ne 'cell_su7' -or $plugin.author.name -ne 'yrui-cmd') { throw 'Plugin display identity is invalid.' }
 if (Test-Path -LiteralPath (Join-Path $repoRoot '.agents\plugins\marketplace.json')) { throw 'Marketplace metadata must not be included.' }
 
@@ -65,6 +65,10 @@ foreach ($phrase in @('name: cell_su7', 'platform-contract.json', 'runtime-profi
 }
 foreach ($forbidden in @('Read-Host', 'FROZEN-MANIFEST', 'fixed Git tag')) {
     if ($skillText -like "*$forbidden*") { throw "Conflicting Skill rule remains: $forbidden" }
+}
+$optionalNoAiText = Get-Content -LiteralPath (Join-Path $skillRoot 'references\optional-no-ai.md') -Raw -Encoding UTF8
+foreach ($phrase in @('Required yes order:', 'Required no order:', 'Both branches must use the enhanced PNG', '--mode faithful')) {
+    if ($optionalNoAiText -notlike "*$phrase*") { throw "Required enhancement contract is missing: $phrase" }
 }
 
 $tempBase = Join-Path $repoRoot '.test-tmp'
@@ -110,4 +114,4 @@ finally {
     }
 }
 
-Write-Output 'PACKAGE_OK|skill=cell_su7|version=0.4.6|platforms=windows,macos|freeze=removed|secret_scan=clean'
+Write-Output 'PACKAGE_OK|skill=cell_su7|version=0.4.7|platforms=windows,macos|freeze=removed|secret_scan=clean'
