@@ -1,8 +1,18 @@
 # cell_su7
 
-Record original lettering and positions, then use any available image-editing model to remove only the text. No specific model is required. Compare the result against the original to verify unchanged graphics, layout, colors and canvas. Send the cleaned image to path recognition and restore the recorded text as live editable objects before drawing in PowerPoint or Adobe Illustrator. Codex performs the model cleanup and visual comparison; the scripts consume the prepared image and text manifest.
+Rebuild one scientific image as editable paths and live text in **PowerPoint or Adobe Illustrator**.
 
-This standalone repository contains the complete `cell_su7` skill with both drawing backends. Windows: run `setup.ps1`. macOS: run `bash setup.sh` for the editable PPTX backend. Illustrator has Windows COM and macOS AppleScript routes; the Mac bridge is implemented but desktop-unverified.
+`cell_su7` records every label and its source position, asks an available image-editing model to remove only the text, verifies the remaining graphics against the original, and enhances the checked working image before path recognition. It then draws from background to foreground and restores the recorded labels as editable objects. The original image remains unchanged.
+
+## What you get
+
+- native editable PPTX, or editable AI plus a final PNG;
+- a text manifest with source coordinates;
+- preserved canvas ratio and source layer order;
+- exact-path deduplication without flattening valid occlusion or compound holes;
+- the balance snapshot returned by the recognition service.
+
+This standalone repository contains both drawing backends. On Windows, run `setup.ps1`; on macOS, run `bash setup.sh`. Illustrator uses Windows COM or a macOS AppleScript bridge. The Mac bridge is implemented but has not yet been verified on a physical Mac desktop.
 
 Use `scripts/run_cell_su7.ps1 -InputImage cleaned.png -TextManifest text.json -OutputRoot output -Application ppt` or `-Application ai`. On macOS use `scripts/run_from_image.py --input-image cleaned.png --text-manifest text.json --output-root output`.
 
