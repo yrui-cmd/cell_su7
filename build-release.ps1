@@ -23,6 +23,8 @@ $tempRoot = Join-Path $repoRoot '.release-tmp'
 $stageRoot = Join-Path $tempRoot "cell_su7-v$Version"
 $zipPath = Join-Path $distRoot "cell_su7-v$Version.zip"
 $hashPath = "$zipPath.sha256"
+$checkedTempRoot = [IO.Path]::GetFullPath($tempRoot)
+if (-not $checkedTempRoot.StartsWith($repoRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Refusing to clean outside the repository.' }
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stageRoot, $distRoot | Out-Null
 
@@ -35,7 +37,9 @@ Get-ChildItem -LiteralPath $stageRoot -Recurse -Directory -Filter '__pycache__' 
     if (-not $checked.StartsWith($stageRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Refusing to clean outside the release stage.' }
     Remove-Item -LiteralPath $checked -Recurse -Force
 }
-Get-ChildItem -LiteralPath $stageRoot -Recurse -File -Include '*.pyc','*.pyo','*.dpapi','*.pptx','*.png','*.jpg','*.jpeg','*.webp','*.pdf' | ForEach-Object {
+Get-ChildItem -LiteralPath $stageRoot -Recurse -File | Where-Object {
+    $_.Extension -in @('.pyc', '.pyo', '.dpapi', '.pptx', '.png', '.jpg', '.jpeg', '.webp', '.pdf') -or $_.Name -eq 'runtime-profile.json'
+} | ForEach-Object {
     $checked = [IO.Path]::GetFullPath($_.FullName)
     if (-not $checked.StartsWith($stageRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Refusing to clean outside the release stage.' }
     Remove-Item -LiteralPath $checked -Force
@@ -53,6 +57,10 @@ $releaseManifest = [ordered]@{
     platformContract = 'plugins/cell_su7/skills/cell_su7/references/platform-contract.json'
 }
 $releaseManifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $stageRoot 'RELEASE-MANIFEST.json') -Encoding UTF8
+
+foreach ($required in @('README.md', 'install.py', 'setup.ps1', 'setup.sh', 'plugins\cell_su7\.codex-plugin\plugin.json', 'plugins\cell_su7\skills\cell_su7\SKILL.md', 'plugins\cell_su7\skills\cell_su7\scripts\run_cell_su7.py', 'plugins\cell_su7\skills\cell_no_ai\SKILL.md')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $required) -PathType Leaf)) { throw "Release stage is missing: $required" }
+}
 
 if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
 Compress-Archive -LiteralPath $stageRoot -DestinationPath $zipPath -CompressionLevel Optimal
