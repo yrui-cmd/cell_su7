@@ -1,3 +1,10 @@
+# 0.4.8 — direct recognition without resolution enhancement
+
+- Remove the cell_high_solution prerequisite and invocation from both branches.
+- When cell_no_ai is approved, wait for its result, verify it, and use it directly for recognition. When declined, use the verified cleaned image directly.
+- Keep text manifests, source coordinates, image validation, editable output and existing billing checks.
+- Update Chinese/English documentation and the package checks. No paid image task was submitted to validate this release.
+
 # 0.4.7 — faithful enhancement for both watermark branches
 
 - Require cell_high_solution faithful enhancement before path recognition whether cell_no_ai is accepted or declined.

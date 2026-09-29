@@ -2,7 +2,7 @@
 
 Rebuild one scientific image as editable paths and live text in **PowerPoint or Adobe Illustrator**.
 
-`cell_su7` records every label and its source position, asks an available image-editing model to remove only the text, verifies the remaining graphics against the original, and enhances the checked working image before path recognition. It then draws from background to foreground and restores the recorded labels as editable objects. The original image remains unchanged.
+`cell_su7` records every label and its source position, asks an available image-editing model to remove only the text, verifies the remaining graphics against the original, and sends the checked working image directly for path recognition. It then draws from background to foreground and restores the recorded labels as editable objects. The original image remains unchanged.
 
 ## What you get
 
@@ -22,4 +22,4 @@ PPT now defaults to fast native OOXML on both OSes, preserving compound holes. I
 
 Installation includes the required **cell_no_ai** dependency as a separate skill. Existing standalone installations are synchronized with the official main branch; changed files are backed up and credentials are preserved. For manual installation, copy both skill directories. Installing this dependency does not authorize paid processing: its live balance check and one-credit authorization remain required.
 
-Path recognition always requires the separately installed **cell-high-solution** skill in `faithful` mode. If the user approves cell_no_ai, enhance its downloaded result; if the user declines, enhance the verified cleaned image without calling or charging cell_no_ai. Validate unchanged aspect ratio and alignment, then use only the enhanced PNG for path recognition. Keep the original text manifest and `source_canvas` coordinate system so restored labels remain aligned.
+Since 0.4.8, the workflow has no resolution-enhancement step. If the user approves cell_no_ai, download and verify its result, then use that image directly for path recognition. If the user declines, use the verified cleaned image directly without calling or charging cell_no_ai. Validate unchanged aspect ratio, layout and alignment. Keep the original text manifest and `source_canvas` coordinate system so restored labels remain aligned.

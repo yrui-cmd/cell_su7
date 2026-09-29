@@ -5,12 +5,12 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 
 # cell_su7
 
-`original image -> text manifest + model-cleaned image -> optional confirmed cell_no_ai processing -> mandatory cell_high_solution faithful enhancement -> path-return SVG -> live text restoration -> PPT / Illustrator`
+`original image -> text manifest + model-cleaned image -> optional confirmed cell_no_ai processing -> path-return SVG -> live text restoration -> PPT / Illustrator`
 
 1. Preserve the original image. For images containing text, read [references/text-workflow.md](references/text-workflow.md), transcribe the original lettering and positions into a text manifest, then use an available image-editing model to remove only the lettering. No specific provider or model, including Image 2, is required.
 2. Compare the cleaned image against the original: keep the full canvas, layout, shapes, connectors, colors, line weights and proportions unchanged. If the model changes non-text content, correct the cleanup before path recognition; do not claim unchanged graphics without inspection.
 3. Respect the user's choice of PPT or Adobe Illustrator. If unspecified, ask `用 PPT 还是 Adobe Illustrator？` before a paid request.
-4. Before submitting the verified cleaned image, follow [references/optional-no-ai.md](references/optional-no-ai.md): ask whether to use the additional 1-credit cell_no_ai treatment and wait for an explicit answer. If yes, wait for and download the actual cell_no_ai result and use it as the enhancement input. If no, skip cell_no_ai and use the verified cleaned image as the enhancement input. In both branches, read the installed `cell-high-solution/SKILL.md` (display name `cell_high_solution`), run its deterministic enhancer with `--mode faithful`, wait for a valid enhanced PNG, and use only that PNG as recognition input. Never trace an unenhanced image. Then submit the enhanced image with the bundled API adapter. Pass its original text manifest to the image entrypoint so the returned vector geometry receives live SVG text before native drawing. Preserve raw vector output for inspection. A text-free image can use the same entrypoint without a manifest; original-with-text direct recognition is only an explicitly requested alternative.
+4. Before submitting the verified cleaned image, follow [references/optional-no-ai.md](references/optional-no-ai.md): ask whether to use the additional 1-credit cell_no_ai treatment unless the user already explicitly accepted or declined it for this image. If yes, wait for and download the actual cell_no_ai result, verify it, and submit that returned image directly for path recognition. If no, submit the verified cleaned image directly. Use the bundled API adapter; do not add a resolution-enhancement step. Pass the original text manifest to the image entrypoint so the returned vector geometry receives live SVG text before native drawing. Preserve raw vector output for inspection. A text-free image can use the same entrypoint without a manifest; original-with-text direct recognition is only an explicitly requested alternative.
 5. Validate the Master SVG, then follow the selected backend. An approved SVG can enter post-processing directly. Allocate the next `shibielujingN` basename with the bundled allocator.
 
 ## Required installation dependency
@@ -19,11 +19,11 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 
 The synchronizer backs up changed skill files, preserves credentials and unrelated files, and records the upstream revision. It accepts `--destination` for custom skill roots. If a network check fails, retry or resolve it; never claim the dependency is current without a successful check. Drawing without the optional watermark step may proceed, but resolve the update before a new watermark submission. Dependency updates do not authorize API charges. Existing jobs must still be received using the same job ID.
 
-## Required enhancement before recognition
+## Recognition input and text alignment
 
-Both the yes and no branches require the separately installed `cell-high-solution` skill, displayed as `cell_high_solution`. Resolve its current runtime and command from its SKILL.md; use `--mode faithful` to preserve scientific structures. For yes, enhance the downloaded no-ai output; for no, enhance the verified cleaned image. Save each stage separately. Do not continue to recognition if enhancement fails or is unavailable; resolve the dependency/error and resume from the saved enhancement input. Never resubmit a completed no-ai job merely because enhancement failed. The no branch incurs no cell_no_ai charge, but enhancement remains mandatory.
+For yes, use the downloaded and verified no-ai output directly. For no, use the verified cleaned image directly without calling or charging cell_no_ai. Save each stage separately. If the returned image is unreadable or its layout changed, resolve that issue before recognition and retain the existing job; do not resubmit a completed no-ai job merely because a later step failed.
 
-Check that enhancement preserves the full canvas aspect ratio and alignment. Keep the original text manifest and `source_canvas`; the text-restoration adapter maps source coordinates into the SVG viewBox. Do not replace `source_canvas` with the enlarged dimensions while retaining old pixel coordinates.
+Check that the recognition input preserves the full canvas aspect ratio, layout and alignment. Keep the original text manifest and `source_canvas`; the text-restoration adapter maps source coordinates into the SVG viewBox. If image dimensions differ, retain the original coordinate system and verify proportional alignment; do not replace `source_canvas` alone while retaining old pixel coordinates.
 
 ## Preferred playback: individual paths, maximum speed
 

@@ -4,7 +4,7 @@ This branch is requested by the user. It runs after text removal and visual chec
 
 ## Ask once for this image
 
-Ask: “是否彻底消除 AI 水印？选择‘是’将调用 cell_no_ai 进行额外处理，需额外扣除 1 个额度；选择‘否’则跳过去水印。无论选择是或否，路径识别前都必须先用 cell_high_solution 保真高清修复。”
+If the user has already explicitly accepted or declined this treatment for the current image, reuse that decision. Otherwise ask: “是否彻底消除 AI 水印？选择‘是’将调用 cell_no_ai 进行额外处理，需额外扣除 1 个额度；选择‘否’则跳过去水印。”
 
 Explain if needed: AI image provenance can involve different marking mechanisms; tracing does not guarantee removal of every type. Do not assert every image contains exactly two watermark types, that tracing always removes one, or that the additional service guarantees complete removal without authoritative evidence. The question describes the user's requested treatment goal, not a verified outcome.
 
@@ -17,13 +17,12 @@ Wait for an explicit answer. No answer is pending, never consent or a default no
 3. Send the verified text-free image, not the original lettered image. Keep the original image and text manifest unchanged. Save the decision, input image identity and returned job identifier with the job, excluding credentials.
 4. Wait for successful completion and download the returned image. Resume/poll the same job on transient errors; do not resubmit or charge again merely because a request timed out. On failure, report it and preserve the pending workflow.
 5. Check that the returned image is readable and retains the coordinate frame, drawing, connectors and proportions. If it changed those, correct or resolve the mismatch before recognition; do not blindly reuse text coordinates on shifted artwork.
-6. Mandatory: read the separately installed `cell-high-solution/SKILL.md` (display name `cell_high_solution`) and run its bundled enhancer once with the downloaded no-ai output as input and `--mode faithful`. Wait for the enhanced PNG; save it separately. Do not use auto/restore/redraw for this scientific-figure continuation. If unavailable or failed, resolve that step before recognition; keep the same no-ai result and do not resubmit a paid job.
-7. Verify readable enhanced output and unchanged canvas aspect ratio, layout and alignment. Use the enhanced PNG, never the raw no-ai return, as path-recognition input. Keep the original manifest and `source_canvas` so the existing viewBox mapping restores labels proportionally; do not change `source_canvas` alone. Continue native drawing and editable text restoration normally. Report actual service billing/balance; do not claim verified removal of all watermark types.
+6. Use the downloaded and verified no-ai image directly as path-recognition input. Do not insert an enhancement or upscaling step. Keep the original manifest and `source_canvas` so the existing viewBox mapping restores labels proportionally; do not change `source_canvas` alone. Continue native drawing and editable text restoration normally. Report actual service billing/balance; do not claim verified removal of all watermark types.
 
 ## No
 
-Do not call cell_no_ai and incur no extra watermark-treatment charge. Read the separately installed `cell-high-solution/SKILL.md`, run its bundled enhancer once on the already-verified cleaned image with `--mode faithful`, and wait for a valid enhanced PNG. Verify unchanged aspect ratio, layout and alignment, then use that enhanced PNG—not the unenhanced cleaned image—as path-recognition input. Retain the original text manifest and `source_canvas`.
+Do not call cell_no_ai and incur no extra watermark-treatment charge. Use the already-verified cleaned image directly as path-recognition input, with unchanged aspect ratio, layout and alignment. Do not insert an enhancement or upscaling step. Retain the original text manifest and `source_canvas`.
 
 ## Integration contract
 
-Required yes order: text-free image -> cell_no_ai downloaded result -> cell_high_solution faithful PNG -> path recognition -> editable text restoration. Required no order: text-free image -> cell_high_solution faithful PNG -> path recognition -> editable text restoration. Both branches must use the enhanced PNG. `cell_no_ai` is bundled as a separate required skill; `cell-high-solution` is an external local dependency whose command must be resolved from its installed skill. This update defines orchestration and does not claim a new paid end-to-end test.
+Required yes order: text-free image -> cell_no_ai downloaded result -> path recognition -> editable text restoration. Required no order: text-free image -> path recognition -> editable text restoration. Both branches use their verified image directly. `cell_no_ai` is bundled as a separate required skill. This update defines orchestration and does not claim a new paid end-to-end test.
