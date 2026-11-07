@@ -86,3 +86,7 @@ API Key 可以直接粘贴到 Codex 聊天框，由助手完成配置；cell_su7
 安装时和每次启动 cell_su7 任务时自动同步官方 cell_no_ai 最新主分支，无需用户提醒。同步失败时不声称已是最新版，先重试再提交去水印任务。
 
 从 0.4.8 起，流程取消高清增强步骤。选择去水印时，直接识别已领取并核对的 no-ai 返回图；选择跳过时，直接识别已核对的去字图。原始文字清单和 `source_canvas` 坐标系保持不变，继续检查文字与图形对齐。
+
+## Python 接收与原对话接续
+
+识别等待不设置定时任务。使用 `run_cell_su7.py --background --thread-id 原对话ID --authorize-wake`，由独立Python接收进程查询原任务、下载并校验SVG，确认文件落盘后只唤醒原对话一次，再继续已选PPT/Illustrator绘图。重复接收沿用同一任务，不重复收费；停止任务会停止接收与唤醒。上传回执或唤醒回执不明确时保留状态，不自动重发。需要正在运行且通道可用的Codex桌面；桌面检查失败时不退回定时任务。详见 [Python返回流程](plugins/cell_su7/skills/cell_su7/references/python-return.md)。

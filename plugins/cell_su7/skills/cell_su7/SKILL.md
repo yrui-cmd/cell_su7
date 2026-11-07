@@ -13,6 +13,10 @@ description: Reconstruct image-based scientific figures as editable PowerPoint o
 4. Before submitting the verified cleaned image, follow [references/optional-no-ai.md](references/optional-no-ai.md): ask whether to use the additional 1-credit cell_no_ai treatment unless the user already explicitly accepted or declined it for this image. If yes, wait for and download the actual cell_no_ai result, verify it, and submit that returned image directly for path recognition. If no, submit the verified cleaned image directly. Use the bundled API adapter; do not add a resolution-enhancement step. Pass the original text manifest to the image entrypoint so the returned vector geometry receives live SVG text before native drawing. Preserve raw vector output for inspection. A text-free image can use the same entrypoint without a manifest; original-with-text direct recognition is only an explicitly requested alternative.
 5. Validate the Master SVG, then follow the selected backend. An approved SVG can enter post-processing directly. Allocate the next `shibielujingN` basename with the bundled allocator.
 
+## Python result return (no scheduled tasks)
+
+For remote recognition, follow [references/python-return.md](references/python-return.md). Use the background Python receiver to save the original job ID, download and validate the actual SVG, then wake the same chat once through the live desktop bridge. Do not create Codex automations/heartbeats, cron jobs, Windows scheduled tasks or repeated assistant polling. Resume drawing in the original chat only after verified receipt; never resubmit to recover a download or wake failure. This changes waiting/return only, not the image-cleanup, optional no-ai choice, credits, or drawing backend. Existing stopped jobs remain stopped.
+
 ## Required installation dependency
 
 `cell_no_ai` is required and remains independently callable. Before each new cell_su7 task, automatically run `python scripts/sync_cell_no_ai.py` using the configured runtime, then read the updated sibling `cell_no_ai/SKILL.md`. Installation runs the same check. Use the official repository main branch as the current source, including changes newer than release ZIPs. Do not wait for the user to remind you, and do not repeatedly check during the same job. Respect current cell_no_ai workflow and opening notices rather than copying old rules into this skill.
@@ -48,8 +52,8 @@ Use [references/platform-contract.json](references/platform-contract.json) for s
 
 If the canvas or application turns white, read [references/white-overlay-diagnostics.md](references/white-overlay-diagnostics.md). Check compound-contour loss before blaming visibility or depth. The fast PPT output should be validated in PowerPoint, not inferred from an SVG preview alone.
 
-Windows prepared image: `scripts/run_cell_su7.ps1 -InputImage <cleaned-image> -TextManifest <text.json> -OutputRoot <directory> -Application ppt|ai`.
-Cross-platform prepared image: `python scripts/run_cell_su7.py --input-image <cleaned-image> --text-manifest <text.json> --output-root <directory> --application ppt|ai`.
+Default prepared-image return on a verified Codex desktop: `python scripts/run_cell_su7.py --input-image <cleaned-image> --text-manifest <text.json> --output-root <directory> --application ppt|ai --background --thread-id <original-thread-id> --authorize-wake`. This returns a durable job directory; receive/resume that directory rather than repeating submission.
+The older foreground commands remain available when explicitly needed: `scripts/run_cell_su7.ps1` on Windows or `python scripts/run_cell_su7.py` without `--background`; neither creates a scheduled task.
 Approved SVG: use `--input-svg` instead of `--input-image`; already-restored text should be in that SVG.
 
 Preserve all pre-existing artwork and original input files. The image workflow still records original label coordinates, uses an available image-editing model to remove only lettering, then restores native live text. Follow [references/text-workflow.md](references/text-workflow.md).

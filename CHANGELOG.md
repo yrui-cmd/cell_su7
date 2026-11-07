@@ -1,3 +1,10 @@
+# 0.4.9 — Python receipt and same-chat continuation
+
+- Add a detached per-job Python receiver and a scoped live desktop bridge. No automations, heartbeat, cron or scheduled tasks.
+- Persist the original image ID, validate the downloaded vector SVG, and wake the originating chat once before native drawing.
+- Fence ambiguous upload/wake acknowledgements against duplicate sends or charges; preserve stop/resume and text manifests.
+- Eight offline receiver tests and a read-only Windows desktop connection probe passed. No paid recognition or real wake message was used for testing; macOS wake remains unverified.
+
 # 0.4.8 — direct recognition without resolution enhancement
 
 - Remove the cell_high_solution prerequisite and invocation from both branches.

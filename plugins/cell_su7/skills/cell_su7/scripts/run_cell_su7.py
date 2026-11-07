@@ -16,9 +16,24 @@ def main():
     parser.add_argument('--application',required=True,choices=['ppt','ai'])
     parser.add_argument('--estimated-credits',type=int,default=1)
     parser.add_argument('--approve-high-cost',action='store_true')
+    parser.add_argument('--background',action='store_true',help='Python receives the SVG then wakes the original chat; no scheduler')
+    parser.add_argument('--thread-id')
+    parser.add_argument('--authorize-wake',action='store_true')
     args=parser.parse_args()
     scripts=Path(__file__).resolve().parent
-    if args.input_svg:
+    if args.background:
+        if not args.input_image or not args.thread_id or not args.authorize_wake:
+            parser.error('--background requires --input-image, --thread-id and --authorize-wake')
+        if args.estimated_credits>1 and not args.approve_high_cost:
+            parser.error('CREDIT_CONFIRM_REQUIRED')
+        name=subprocess.check_output([sys.executable,str(scripts/'allocate_shibielujing_name.py'),
+                                      '--root',str(args.output_root)],text=True).strip()
+        command=[sys.executable,str(scripts/'receive_and_wake.py'),'start','--job-dir',str(args.output_root/name),
+                 '--input-image',str(args.input_image),'--application',args.application,'--thread-id',args.thread_id,
+                 '--authorize-wake','--estimated-credits',str(args.estimated_credits)]
+        if args.text_manifest: command+=['--text-manifest',str(args.text_manifest)]
+        if args.approve_high_cost: command+=['--approve-high-cost']
+    elif args.input_svg:
         if args.text_manifest:
             parser.error('Merge the text manifest into the approved SVG before using --input-svg')
         name=subprocess.check_output([sys.executable,str(scripts/'allocate_shibielujing_name.py'),'--root',str(args.output_root)],text=True).strip()

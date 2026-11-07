@@ -23,3 +23,7 @@ PPT now defaults to fast native OOXML on both OSes, preserving compound holes. I
 Installation includes the required **cell_no_ai** dependency as a separate skill. Existing standalone installations are synchronized with the official main branch; changed files are backed up and credentials are preserved. For manual installation, copy both skill directories. Installing this dependency does not authorize paid processing: its live balance check and one-credit authorization remain required.
 
 Since 0.4.8, the workflow has no resolution-enhancement step. If the user approves cell_no_ai, download and verify its result, then use that image directly for path recognition. If the user declines, use the verified cleaned image directly without calling or charging cell_no_ai. Validate unchanged aspect ratio, layout and alignment. Keep the original text manifest and `source_canvas` coordinate system so restored labels remain aligned.
+
+## Python result return
+
+Use the prepared-image selector with `--background --thread-id <original-chat> --authorize-wake`. A per-job Python process receives and validates the SVG before waking the same Codex desktop chat once. It creates no scheduled tasks and never repeats an ambiguous upload or wake request. The original chat restores live text and continues the selected drawing backend. See [Python return](plugins/cell_su7/skills/cell_su7/references/python-return.md). Windows desktop connectivity is checked; macOS wake is not yet desktop-validated.
