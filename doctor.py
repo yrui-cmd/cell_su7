@@ -13,6 +13,9 @@ from pathlib import Path
 
 
 LOCKED = {"python-pptx": "1.0.2", "fonttools": "4.61.1", "shapely": "2.1.2"}
+LOCKED["pypinyin"] = "0.55.0"
+if platform.system() == "Windows":
+    LOCKED["pywin32"] = "311"
 
 
 def main() -> int:

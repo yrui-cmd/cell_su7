@@ -1,0 +1,277 @@
+"""Regression checks for graphic dragging in the native Cell preview."""
+import importlib.util
+import sys
+import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
+
+from pptx import Presentation
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.util import Inches
+
+SKILL_ROOT = Path(__file__).resolve().parents[1]
+if not (SKILL_ROOT / 'scripts/ppt_swarm_playback.py').is_file():
+    SKILL_ROOT = SKILL_ROOT / 'plugins/cell_su7/skills/cell_su7'
+sys.path.insert(0, str(SKILL_ROOT / 'scripts'))
+SPEC = importlib.util.spec_from_file_location(
+    SKILL_ROOT.name + '_playback_test_target', SKILL_ROOT / 'scripts/ppt_swarm_playback.py')
+playback = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = playback
+SPEC.loader.exec_module(playback)
+from prepare_path_playback import prepare
+
+
+class GraphicDragTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == 'win32', 'Windows playback dependencies')
+    def test_manifest_preserves_its_skill_identity_and_start_settings(self):
+        with TemporaryDirectory() as folder:
+            source, output = Path(folder) / 'source.pptx', Path(folder) / 'playback.pptx'
+            deck = Presentation()
+            slide = deck.slides.add_slide(deck.slide_layouts[6])
+            slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, Inches(1), Inches(1))
+            deck.save(source)
+            original = source.read_bytes()
+            manifest = playback.prepare_manifest(source, output, wait_for_start=True)
+            import json
+            state = json.loads(manifest.read_text())
+            self.assertEqual(state['job_id'], SKILL_ROOT.name.replace('_', '-'))
+            self.assertTrue(state['fullscreen'])
+            self.assertTrue(state['wait_for_start'])
+            self.assertEqual(source.read_bytes(), original)
+            self.assertEqual(sum(map(len, state['targets'].values())), 1)
+
+    def test_fullscreen_startup_is_idempotent_and_fits_after_layout(self):
+        events = []
+        class Commands:
+            pressed = False
+            def GetPressedMso(self, command):
+                self.assert_command(command)
+                return self.pressed
+            def ExecuteMso(self, command):
+                self.assert_command(command)
+                self.pressed = not self.pressed
+                events.append('ribbon')
+            def assert_command(self, command):
+                if command != 'HideRibbon':
+                    raise AssertionError(command)
+        commands = Commands()
+        class View:
+            Zoom = 170
+            def __setattr__(self, name, value):
+                if name == 'ZoomToFit' and value:
+                    events.append(('fit', commands.pressed))
+                object.__setattr__(self, name, value)
+        app = SimpleNamespace(WindowState=1, CommandBars=commands)
+        window = SimpleNamespace(Activate=lambda: None, WindowState=1,
+                                 ViewType=0, View=View())
+        playback.configure_preview_window(app, window)
+        playback.configure_preview_window(app, window)
+        self.assertEqual(events, ['ribbon', ('fit', True), ('fit', True)])
+        self.assertEqual(app.WindowState, 3)
+        self.assertEqual((window.WindowState, window.ViewType), (3, 1))
+        self.assertFalse(window.View.ZoomToFit)
+        self.assertEqual(window.View.Zoom, 170)
+
+    def test_denied_foreground_request_keeps_preview_waiting(self):
+        class ForegroundDenied(Exception):
+            pass
+        def deny(hwnd):
+            raise ForegroundDenied()
+        gui = SimpleNamespace(error=ForegroundDenied, SetForegroundWindow=deny,
+                              IsWindow=lambda hwnd: True,
+                              GetForegroundWindow=lambda: 100,
+                              GetAncestor=lambda hwnd, flag: 100)
+        window = SimpleNamespace(Activate=lambda: None)
+        playback.request_preview_foreground(window, gui, 200)
+        self.assertFalse(playback.preview_has_focus(gui, 200))
+
+    def test_start_gate_requires_its_own_signal_and_honors_cancellation(self):
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / 'previous-run.start').touch()
+            gate, cancel = root / 'current-run.start', root / 'playback.cancel'
+            with self.assertRaisesRegex(RuntimeError, 'did not arrive'):
+                playback.wait_for_start(gate, cancel, timeout=0)
+            cancel.touch()
+            with self.assertRaisesRegex(RuntimeError, 'cancelled'):
+                playback.wait_for_start(gate, cancel)
+            cancel.unlink()
+            gate.touch()
+            playback.wait_for_start(gate, cancel, timeout=0)
+
+    def test_twelve_contiguous_segments_preserve_source_path_order(self):
+        self.assertEqual(playback.WORKER_COUNT, 12)
+        self.assertEqual(len(set(playback.COLORS)), 12)
+        for count in [0, 3, 12, 13, 2086]:
+            original = list(range(count))
+            parts = playback.split_path_sequence(original)
+            self.assertEqual(len(parts), 12)
+            self.assertEqual([path for part in parts for path in part], original)
+            self.assertLessEqual(max(map(len, parts)) - min(map(len, parts)), 1)
+        parts = playback.split_path_sequence(list(range(2086)))
+        self.assertEqual(parts[0], list(range(173)))
+        self.assertEqual(parts[-1], list(range(1912, 2086)))
+
+    def test_transient_foreground_handle_does_not_abort_playback(self):
+        def invalid_handle(*args):
+            raise RuntimeError(1400, 'GetAncestor', 'Invalid window handle')
+        gui = SimpleNamespace(IsWindow=lambda hwnd: True,
+                              GetForegroundWindow=lambda: 123,
+                              GetAncestor=invalid_handle)
+        self.assertFalse(playback.preview_has_focus(gui, 456))
+        gui.GetForegroundWindow = lambda: 0
+        self.assertFalse(playback.preview_has_focus(gui, 456))
+        gui.GetForegroundWindow = lambda: 123
+        gui.GetAncestor = lambda hwnd, flag: 456
+        gui.IsIconic = lambda hwnd: False
+        self.assertTrue(playback.preview_has_focus(gui, 456))
+        gui.IsWindow = lambda hwnd: False
+        with self.assertRaises(RuntimeError):
+            playback.preview_has_focus(gui, 456)
+
+    def test_twelve_pointers_advance_their_contiguous_slices_together(self):
+        events = []
+        class RecordedShape:
+            def __init__(self, identifier):
+                self.Id = identifier
+                self.Visible = 0
+            def __setattr__(self, name, value):
+                if name == 'Visible' and value == -1:
+                    events.append(self.Id)
+                object.__setattr__(self, name, value)
+
+        graphics = [RecordedShape(index + 1) for index in range(60)]
+        info = {shape.Id: (index % 10 * 30, index // 10 * 30, 20, 20, index, '')
+                for index, shape in enumerate(graphics)}
+        pointers = [SimpleNamespace(Left=0, Top=0, Visible=0) for _ in playback.COLORS]
+        bubbles = [SimpleNamespace(Visible=0) for _ in playback.COLORS]
+        boxes = [SimpleNamespace(Visible=0) for _ in playback.COLORS]
+        prepared = playback.PreparedPage({}, {shape.Id: shape for shape in graphics},
+                                         info, {}, set(), pointers, bubbles, boxes, set())
+        metrics = {}
+        for _ in playback.page_stream(prepared, 400, 300, [], metrics):
+            pass
+        for step in range(5):
+            self.assertEqual(events[step * 12:(step + 1) * 12], list(range(step + 1, 61, 5)))
+        self.assertEqual(metrics['partition_sizes'], [5] * 12)
+        self.assertEqual(metrics['max_active_workers'], 12)
+
+    def test_finished_pointer_disappears_while_other_segments_continue(self):
+        graphics = {index: SimpleNamespace(Id=index, Visible=0) for index in range(1, 25)}
+        info = {index: (index * 10, 20, 20, 20, index, '') for index in graphics}
+        pointers = [SimpleNamespace(Left=0, Top=0, Visible=0) for _ in playback.COLORS]
+        bubbles = [SimpleNamespace(Visible=0, TextFrame=SimpleNamespace(
+            TextRange=SimpleNamespace(Text=''))) for _ in playback.COLORS]
+        boxes = [SimpleNamespace(Visible=0) for _ in playback.COLORS]
+        prepared = playback.PreparedPage({}, graphics, info, {}, set(), pointers, bubbles, boxes, {23})
+        observed_finished_pointer = False
+        for _ in playback.page_stream(prepared, 400, 300, [], {}):
+            if pointers[0].Visible == 0 and pointers[-1].Visible == -1:
+                observed_finished_pointer = True
+        self.assertTrue(observed_finished_pointer)
+        self.assertTrue(all(pointer.Visible == 0 for pointer in pointers))
+
+    def test_cursor_layer_publishes_once_and_batches_native_visibility(self):
+        pictures, visibility = [], []
+        class Range:
+            def __setattr__(self, name, value):
+                visibility.append(value)
+        shape = SimpleNamespace(Name='', Line=SimpleNamespace(Visible=0), Visible=0,
+                                Fill=SimpleNamespace(UserPicture=pictures.append))
+        slide = SimpleNamespace(Shapes=SimpleNamespace(
+            AddShape=lambda *args: shape,
+            Range=lambda names: Range()))
+        overlay = playback.CursorOverlay(slide, 400, 300, playback.COLORS)
+        try:
+            for index, pointer in enumerate(overlay.pointers):
+                pointer.Left, pointer.Top, pointer.Visible = index * 20, 20, -1
+                overlay.show(index + 1)
+            overlay.publish()
+            self.assertEqual(len(pictures), 1)
+            self.assertEqual(visibility, [-1])
+            overlay.publish()
+            self.assertEqual(len(pictures), 1)
+            from PIL import Image
+            sample = (round(2 * overlay.scale), round(28 * overlay.scale))
+            with Image.open(pictures[0]) as image:
+                self.assertGreater(image.getpixel(sample)[3], 0)
+            overlay.pointers[0].Visible = 0
+            overlay.publish()
+            with Image.open(pictures[-1]) as image:
+                self.assertEqual(image.getpixel(sample)[3], 0)
+        finally:
+            overlay.close()
+
+    def test_text_box_and_text_bearing_frame_are_distinguished(self):
+        deck = Presentation()
+        slide = deck.slides.add_slide(deck.slide_layouts[6])
+        label = slide.shapes.add_textbox(0, 0, Inches(2), Inches(1))
+        label.text = 'Plain text'
+        frame = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,
+                                       0, 0, Inches(2), Inches(1))
+        frame.text = 'Text on a frame'
+        ring = slide.shapes.add_shape(MSO_SHAPE.DONUT,
+                                      0, 0, Inches(1), Inches(1))
+        self.assertFalse(playback.is_frame_shape(label))
+        self.assertTrue(playback.is_frame_shape(frame))
+        self.assertFalse(playback.is_frame_shape(ring))
+        label.fill.solid()
+        self.assertTrue(playback.is_frame_shape(label))
+
+    def test_rectangle_freeform_is_recognized(self):
+        deck = Presentation()
+        slide = deck.slides.add_slide(deck.slide_layouts[6])
+        drawing = slide.shapes.build_freeform(0, 0)
+        drawing.add_line_segments([(100, 0), (100, 50), (0, 50)], close=True)
+        frame = drawing.convert_to_shape()
+        self.assertTrue(playback.is_frame_shape(frame))
+
+    def test_group_is_hidden_as_one_editable_object(self):
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            deck = Presentation()
+            slide = deck.slides.add_slide(deck.slide_layouts[6])
+            group = slide.shapes.add_group_shape()
+            group.shapes.add_shape(MSO_SHAPE.OVAL, 0, 0, Inches(1), Inches(1))
+            deck.save(root / 'source.pptx')
+            self.assertEqual(prepare(root / 'source.pptx', root / 'hidden.pptx'), 1)
+            hidden = Presentation(root / 'hidden.pptx').slides[0].shapes[0]
+            self.assertEqual(hidden._element[0][0].get('hidden'), '1')
+            self.assertEqual(len(hidden.shapes), 1)
+
+    def test_graphic_visibly_grows_before_native_content_appears(self):
+        class Box:
+            def __init__(self):
+                self.widths = []
+            def __setattr__(self, name, value):
+                if name == 'Width':
+                    self.widths.append(value)
+                object.__setattr__(self, name, value)
+
+        source = SimpleNamespace(Id=10, Visible=0, Width=90, Height=60)
+        pointers = [SimpleNamespace(Left=0, Top=0, Visible=0) for _ in playback.COLORS]
+        bubbles = [SimpleNamespace(Visible=0, TextFrame=SimpleNamespace(
+            TextRange=SimpleNamespace(Text=''))) for _ in playback.COLORS]
+        boxes = [Box() for _ in playback.COLORS]
+        prepared = playback.PreparedPage({}, {10: source}, {10: (10, 10, 90, 60, 1, '')},
+                                         {}, set(), pointers, bubbles, boxes, {10})
+        metrics = {}
+        states = []
+        for _ in playback.page_stream(prepared, 200, 150, [], metrics):
+            states.append(source.Visible)
+        self.assertEqual(metrics['graphic_drag_frames'], 8)
+        self.assertEqual(metrics['dragged_graphics'], 1)
+        owner = next(index for index, part in enumerate(playback.split_path_sequence([10])) if part)
+        self.assertEqual(boxes[owner].widths[-1], 90)
+        self.assertEqual(boxes[owner].widths, sorted(boxes[owner].widths))
+        self.assertEqual(metrics['partition_count'], 12)
+        self.assertEqual(sum(metrics['partition_sizes']), 1)
+        self.assertEqual(metrics['partition_sizes'][owner], 1)
+        self.assertTrue(all(value == 0 for value in states[:8]))
+        self.assertEqual(source.Visible, -1)
+        self.assertEqual((source.Width, source.Height), (90, 60))
+
+
+if __name__ == '__main__':
+    unittest.main()

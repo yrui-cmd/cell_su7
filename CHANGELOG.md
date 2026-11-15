@@ -1,3 +1,11 @@
+# Unreleased — twelve-pointer native reconstruction playback
+
+- Split the source path/object sequence into 12 contiguous segments, advance all pointers together, expand graphic frames and reveal live text character by character.
+- Hide each pointer as its own segment finishes. Share one temporary cursor layer, batch native reveals and cache glyph operations before playing.
+- Prepare the full-screen editor and request foreground activation before drawing. Pause on focus loss, support a run-specific start gate, and refit after setup.
+- Preserve the complete native deck, source geometry, compound holes and text; remove preview helpers from saved output.
+- Add offline playback regression checks and package/runtime dependencies. Desktop playback remains Windows-only; no paid image request was used for validation.
+
 # 0.4.9 — Python receipt and same-chat continuation
 
 - Add a detached per-job Python receiver and a scoped live desktop bridge. No automations, heartbeat, cron or scheduled tasks.

@@ -17,6 +17,10 @@ $required = @(
     'plugins\cell_su7\skills\cell_su7\references\platform-contract.json',
     'plugins\cell_su7\skills\cell_su7\scripts\run_cell_ppt.ps1',
     'plugins\cell_su7\skills\cell_su7\scripts\run_cell_ppt_ooxml.py',
+    'plugins\cell_su7\skills\cell_su7\scripts\run_ppt_path_playback.ps1',
+    'plugins\cell_su7\skills\cell_su7\scripts\prepare_path_playback.py',
+    'plugins\cell_su7\skills\cell_su7\scripts\ppt_swarm_playback.py',
+    'plugins\cell_su7\skills\cell_su7\scripts\cursor_overlay.py',
     'plugins\cell_su7\skills\cell_su7\scripts\run_from_svg.ps1',
     'plugins\cell_su7\skills\cell_su7\scripts\run_from_svg.py',
     'plugins\cell_su7\skills\cell_su7\scripts\run_from_image.ps1',
@@ -45,7 +49,7 @@ $contract = Get-Content -LiteralPath (Join-Path $skillRoot 'references\platform-
 if ($contract.ordinaryBatchMin -ne 20 -or $contract.ordinaryBatchMax -ne 50 -or $contract.geometryCacheSchema -ne 3 -or $contract.complexPointThreshold -ne 320 -or $contract.maxBatchPoints -ne 2200 -or $contract.windowsStepDelayMs -ne 8 -or $contract.visibilityRule -ne 'remove-exact-duplicates-only') { throw 'Fixed core defaults are invalid.' }
 if ($contract.powerPointCompatibility.notYearLocked -ne $true -or $contract.powerPointCompatibility.windows -notcontains '2016' -or $contract.powerPointCompatibility.windows -notcontains 'Microsoft 365 desktop') { throw 'PowerPoint compatibility must not be year-locked.' }
 if ($contract.installation.autoDetectRuntime -ne $true -or $contract.installation.chatApiKeyAllowed -ne $true -or $contract.installation.credentialTransport -ne 'stdin-only') { throw 'Automatic installation contract is invalid.' }
-$expectedRequirements = "python-pptx==1.0.2`nfonttools==4.61.1`nshapely==2.1.2"
+$expectedRequirements = 'python-pptx==1.0.2' + "`n" + 'fonttools==4.61.1' + "`n" + 'shapely==2.1.2' + "`n" + 'pypinyin==0.55.0' + "`n" + 'pywin32==311; sys_platform == "win32"'
 $actualRequirements = (Get-Content -LiteralPath (Join-Path $repoRoot 'requirements.lock') -Raw -Encoding UTF8).Trim() -replace "`r`n", "`n"
 if ($actualRequirements -ne $expectedRequirements) { throw 'Python dependencies are not exactly locked.' }
 
@@ -84,6 +88,11 @@ try {
     $installed = Join-Path $installRoot 'cell_su7\SKILL.md'
     if (-not (Test-Path -LiteralPath $installed -PathType Leaf)) { throw 'Install smoke test failed.' }
     if ((Get-Item -LiteralPath (Split-Path -Parent $installed)).LinkType) { throw 'Public installer created a link instead of a copy.' }
+    foreach ($relative in @('scripts\run_ppt_path_playback.ps1', 'scripts\prepare_path_playback.py', 'scripts\ppt_swarm_playback.py', 'scripts\cursor_overlay.py')) {
+        $sourceFile=Join-Path $skillRoot $relative
+        $installedFile=Join-Path (Split-Path -Parent $installed) $relative
+        if (-not (Test-Path -LiteralPath $installedFile -PathType Leaf) -or (Get-FileHash -LiteralPath $sourceFile).Hash -ne (Get-FileHash -LiteralPath $installedFile).Hash) { throw "Installed playback helper differs: $relative" }
+    }
     $profilePath = Join-Path $installRoot 'cell_su7\runtime-profile.json'
     if (-not (Test-Path -LiteralPath $profilePath -PathType Leaf)) { throw 'Automatic runtime profile was not created.' }
     $profile = Get-Content -LiteralPath $profilePath -Raw -Encoding UTF8 | ConvertFrom-Json

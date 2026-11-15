@@ -1,4 +1,4 @@
-"""Make an isolated one-slide deck initially hidden for native path playback."""
+"""Make an isolated one-slide deck with native objects hidden for playback."""
 import argparse
 from pathlib import Path
 from zipfile import ZipFile
@@ -15,13 +15,15 @@ def prepare(source, target):
         if len(slides) != 1:
             raise ValueError('Playback requires an isolated single-slide drawing')
         root = E.fromstring(archive.read(slides[0]))
-        shapes = root.findall('p:cSld/p:spTree/p:sp', NS)
+        tree = root.find('p:cSld/p:spTree', NS)
+        shapes = [shape for shape in tree
+                  if E.QName(shape).localname in {'sp', 'pic', 'graphicFrame', 'grpSp', 'cxnSp'}]
         if not shapes:
             raise ValueError('No native paths found')
-        if any(shape.find('p:nvSpPr/p:cNvPr', NS).get('hidden') in ('1', 'true') for shape in shapes):
+        if any(shape[0].find('p:cNvPr', NS).get('hidden') in ('1', 'true') for shape in shapes):
             raise ValueError('Source contains intentionally hidden objects; use a clean drawing deck')
         for shape in shapes:
-            shape.find('p:nvSpPr/p:cNvPr', NS).set('hidden', '1')
+            shape[0].find('p:cNvPr', NS).set('hidden', '1')
         with ZipFile(target, 'w') as output:
             for info in archive.infolist():
                 output.writestr(info, E.tostring(root, xml_declaration=True, encoding='UTF-8') if info.filename == slides[0] else archive.read(info.filename))

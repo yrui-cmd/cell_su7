@@ -34,7 +34,7 @@ if (-not $pythonCommand) {
     $pythonPrefix = @('-X', 'utf8')
 }
 if (-not $pythonCommand) { throw 'Python 3.11-3.14 was not found.' }
-& $pythonCommand.Source @pythonPrefix -c "import sys, pptx, fontTools, shapely; assert (3,11) <= sys.version_info[:2] < (3,15); assert pptx.__version__ == '1.0.2'; assert fontTools.__version__ == '4.61.1'; assert shapely.__version__ == '2.1.2'" | Out-Null
+& $pythonCommand.Source @pythonPrefix -c "import sys, pptx, fontTools, shapely, pypinyin, win32com.client; from importlib.metadata import version; assert (3,11) <= sys.version_info[:2] < (3,15); assert pptx.__version__ == '1.0.2'; assert fontTools.__version__ == '4.61.1'; assert shapely.__version__ == '2.1.2'; assert version('pypinyin') == '0.55.0'; assert version('pywin32') == '311'" | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Locked Python dependencies are unavailable or mismatched.' }
 
 $powerPointRegistered = [type]::GetTypeFromProgID('PowerPoint.Application') -ne $null

@@ -1,5 +1,7 @@
 # Four platform combinations
 
+Windows native reconstruction playback additionally requires `pypinyin` and `pywin32`, alongside `python-pptx` and Pillow, in the Python selected by the launcher (`py -3` when available, otherwise `python`). Check these imports before a live run and install missing packages into that runtime. File-only OOXML output does not require the Windows playback packages.
+
 | Platform / application | Runtime | Validation status |
 |---|---|---|
 | Windows PowerPoint | Native OOXML file generation; optional simple-path COM | Complex 2,614-object sample opened and visually checked in PowerPoint; white compound holes preserved |

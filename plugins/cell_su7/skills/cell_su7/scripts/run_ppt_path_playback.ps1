@@ -2,7 +2,10 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)][string]$InputPptx,
-    [Parameter(Mandatory=$true)][string]$OutputPptx
+    [Parameter(Mandatory=$true)][string]$OutputPptx,
+    [ValidateSet('Drag','Visibility')][string]$Mode = 'Drag',
+    [switch]$Windowed,
+    [switch]$WaitForStart
 )
 $ErrorActionPreference='Stop'
 $inputPath=(Resolve-Path -LiteralPath $InputPptx).Path
@@ -10,6 +13,15 @@ $outputPath=[IO.Path]::GetFullPath($OutputPptx)
 $python=Get-Command py -ErrorAction SilentlyContinue
 $prefix=@('-3','-X','utf8')
 if (-not $python) { $python=Get-Command python -ErrorAction Stop; $prefix=@('-X','utf8') }
+if ($Mode -eq 'Drag') {
+    $playbackArgs=@('--input-pptx',$inputPath,'--output-pptx',$outputPath)
+    if ($Windowed) { $playbackArgs += '--windowed' }
+    if ($WaitForStart) { $playbackArgs += '--wait-for-start' }
+    & $python.Source @prefix (Join-Path $PSScriptRoot 'ppt_swarm_playback.py') @playbackArgs
+    if ($LASTEXITCODE -ne 0) { throw 'PowerPoint drag playback failed' }
+    return
+}
+if ($Windowed -or $WaitForStart) { throw 'Windowed and WaitForStart require Drag mode' }
 & $python.Source @prefix (Join-Path $PSScriptRoot 'prepare_path_playback.py') --input-pptx $inputPath --output-pptx $outputPath
 if ($LASTEXITCODE -ne 0) { throw 'Path playback preparation failed' }
 $app=New-Object -ComObject PowerPoint.Application
