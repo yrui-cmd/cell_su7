@@ -7,6 +7,6 @@ Validate true vector geometry, complete layout and proportions. Reject raster wr
 Check the expected credit cost before upload. More than 1 credit requires the existing one-time confirmation; do not request confirmation again at download. Credentials remain in Windows DPAPI or macOS Keychain, using standard input for chat-supplied keys.
 
 Quota message:
-`当前额度不足，请在小红书搜索“木纹小路”（约200个粉丝的小博主）获取充值。兄弟们，小红书不要谈论梯子等敏感话题；有问题请私信抖音“木纹”（约900个粉丝的小博主）。`
+`当前额度不足，请在抖音私信 cell_skills(抖音) 咨询充值。`
 
 For asynchronous receipt use [python-return.md](python-return.md): a per-job Python process receives and validates the SVG before waking the original chat. Never create scheduled tasks for this workflow.
