@@ -75,9 +75,20 @@ python plugins/cell_su7/skills/cell_su7/scripts/run_from_image.py --input-image 
 
 ### 12 鼠标重建演示（Windows PowerPoint）
 
-默认先生成完整原生可编辑对象，再全屏前置演示。原始路径/对象序列按顺序分成 12 个连续段，由 12 个模拟鼠标同时推进；图框展示拉伸尺寸，文字逐字出现，每个鼠标完成后自动消失。共享光标层、逐帧批量显示和文字缓存减少 PowerPoint 调用。带镂空的复合路径保持完整，最终删除临时演示对象。
+在 Windows PowerPoint 中，先生成完整原生可编辑对象，再选择一种方式全屏演示。
 
-使用 `run_ppt_path_playback.ps1 -InputPptx <prepared.pptx> -OutputPptx <new-unique-name.pptx>`；可加 `-WaitForStart` 在确认画面后启动，`-Windowed` 跳过全屏设置，`-Mode Visibility` 使用原有逐对象显示。窗口失去前台焦点时暂停，回到前台后继续。详见 [演示流程](plugins/cell_su7/skills/cell_su7/references/powerpoint-workflow.md)。macOS PowerPoint 当前交付可编辑文件，未实现此桌面演示入口。
+| 展示方式 | 画面 | 参数 |
+| --- | --- | --- |
+| **快速描摹**（默认） | 框线随光标展开，再显示对应的原生图形。 | `-Mode Drag` |
+| **细节描摹** | 光标从实际轮廓起点出现，笔尖沿路径移动，经过的线条逐段显出。 | `-Mode Trace` |
+
+可以告诉 Codex“用快速描摹重画这张图”或“用细节描摹重画这张图”。同一份可编辑 PPTX 可以分别用两种方式重播。
+
+```powershell
+.\plugins\cell_su7\skills\cell_su7\scripts\run_ppt_path_playback.ps1 -InputPptx .\prepared.pptx -OutputPptx .\replay.pptx -Mode Trace
+```
+
+两种方式都把路径按顺序分成 12 个连续段，光标并行推进，文字逐字出现。光标完成分工后自动消失，保存结果包含可编辑图形和文字。还可以用 `-WaitForStart` 确认画面后启动，或用 `-Windowed` 保留普通编辑器布局。详见 [演示流程](plugins/cell_su7/skills/cell_su7/references/powerpoint-workflow.md)。
 
 安装会同时安装必需依赖 **cell_no_ai**；插件包内包含两个独立 skill。已有 cell_no_ai 会自动核对官方主分支并同步更新，修改前备份 skill 文件，保留密钥和配置。手动安装时请同时复制两个 skill 目录。安装依赖不代表同意付费去水印，提交前仍必须查询实时余额并确认 1 额度费用。
 

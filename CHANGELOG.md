@@ -1,4 +1,8 @@
-# Unreleased — twelve-pointer native reconstruction playback
+# 0.4.10 — selectable PowerPoint tracing
+
+- Add 快速描摹 (quick tracing, `-Mode Drag`) and 细节描摹 (detailed tracing, `-Mode Trace`) as selectable display modes.
+- Trace native lines and curves at the pointer tip. Reveal each finished editable graphic after its contour is drawn.
+- Restore the full-screen slide layout on return to the playback window.
 
 - Split the source path/object sequence into 12 contiguous segments, advance all pointers together, expand graphic frames and reveal live text character by character.
 - Hide each pointer as its own segment finishes. Share one temporary cursor layer, batch native reveals and cache glyph operations before playing.

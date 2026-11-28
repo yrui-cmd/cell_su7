@@ -5,6 +5,7 @@ editable lettering through temporary native PowerPoint helpers.
 """
 
 import json
+import math
 import time
 from pathlib import Path
 from hashlib import sha256
@@ -16,18 +17,18 @@ from cursor_overlay import CursorOverlay
 
 SKILL_ID = Path(__file__).resolve().parents[1].name.replace("_", "-")
 COLORS = [
-    "0284C7",
-    "7C3AED",
-    "16A34A",
-    "EA580C",
-    "DB2777",
-    "0891B2",
-    "4F46E5",
-    "CA8A04",
-    "0D9488",
-    "BE123C",
-    "9333EA",
-    "DC2626",
+    "22A8D1",
+    "8063DC",
+    "DB537D",
+    "28B787",
+    "DFA326",
+    "C84C9D",
+    "26BDCE",
+    "6463DC",
+    "E88738",
+    "83BA30",
+    "AF61CE",
+    "1BB8AD",
 ]
 WORKER_COUNT = 12
 FRAME_DELAY = 1 / 60
@@ -47,6 +48,7 @@ class PreparedPage(NamedTuple):
     text_steps: dict = None
     shape_keys: dict = None
     clone_keys: dict = None
+    traces: dict = None
 
 
 def cache_text_steps(source, clone, full):
@@ -182,11 +184,13 @@ def is_frame_shape(shape):
     return horizontal and vertical
 
 
-def prepare_manifest(source, destination, *, fullscreen=True, wait_for_start=False):
+def prepare_manifest(source, destination, *, fullscreen=True, wait_for_start=False, mode="drag"):
     import uuid
     from prepare_path_playback import prepare
 
     source, destination = Path(source).resolve(), Path(destination).resolve()
+    if mode not in ("drag", "trace"):
+        raise ValueError(f"Unknown playback mode {mode}")
     # Check dependencies before staging a hidden file or opening PowerPoint.
     import win32com.client
     import pypinyin
@@ -207,7 +211,7 @@ def prepare_manifest(source, destination, *, fullscreen=True, wait_for_start=Fal
         "source": str(source), "copy": str(destination),
         "copy_sha256": sha256(destination.read_bytes()).hexdigest(),
         "targets": targets, "frame_ids": frames,
-        "fullscreen": bool(fullscreen), "wait_for_start": bool(wait_for_start),
+        "fullscreen": bool(fullscreen), "wait_for_start": bool(wait_for_start), "mode": mode,
     }
     manifest = destination.with_suffix(".playback.json")
     manifest.write_text(json.dumps(state, indent=2), encoding="utf-8")
@@ -220,6 +224,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input-pptx", required=True, type=Path)
     parser.add_argument("--output-pptx", required=True, type=Path)
+    parser.add_argument("--mode", choices=("drag", "trace"), default="drag",
+                        help="Expand frames or follow the native vector contours")
     parser.add_argument("--windowed", action="store_true",
                         help="Use the current editor layout without requesting full screen")
     parser.add_argument("--wait-for-start", action="store_true",
@@ -227,7 +233,7 @@ def main():
     args = parser.parse_args()
     return run(prepare_manifest(args.input_pptx, args.output_pptx,
                                 fullscreen=not args.windowed,
-                                wait_for_start=args.wait_for_start))
+                                wait_for_start=args.wait_for_start, mode=args.mode))
 
 
 BUSY_ERRORS = {-2147418111, -2147417846}
@@ -375,7 +381,7 @@ def exclusive_playback():
         win32api.CloseHandle(handle)
 
 
-def prepare_page(slide, shapes, W, H, helpers, frame_ids):
+def prepare_page(slide, shapes, W, H, helpers, frame_ids, *, traces=None):
     """Build helpers while the presentation has no window, never on page entry."""
     # Cache COM properties once. Keep all geometry inside the slide bounds.
     texts, graphics, info, clones, text_steps = {}, {}, {}, {}, {}
@@ -405,21 +411,22 @@ def prepare_page(slide, shapes, W, H, helpers, frame_ids):
                 paste_assets.add(sid)
         if text.strip() and sid in frame_ids:
             graphics[sid] = shape
-    path_parts = split_path_sequence(sorted(info, key=lambda sid: info[sid][4]))
-    presenter = CursorOverlay(slide, W, H, COLORS)
+    presenter = CursorOverlay(slide, W, H, COLORS, trace_mode=traces is not None)
     helpers.append(presenter.shape)
-    for index, part in enumerate(path_parts):
-        if part:
-            x, y, w, h, *_ = info[part[0]]
-            pointer = presenter.pointers[index]
-            pointer.Left = max(0, min(W - 16, x + w / 2))
-            pointer.Top = max(0, min(H - 22, y + h / 2))
+    if traces is None:
+        path_parts = split_path_sequence(sorted(info, key=lambda sid: info[sid][4]))
+        for index, part in enumerate(path_parts):
+            if part:
+                x, y, w, h, *_ = info[part[0]]
+                pointer = presenter.pointers[index]
+                pointer.Left = max(0, min(W - 16, x + w / 2))
+                pointer.Top = max(0, min(H - 22, y + h / 2))
     shapes = {**graphics, **texts}
     shape_keys = {sid: shape.ZOrderPosition for sid, shape in shapes.items()}
     clone_keys = {sid: clone.ZOrderPosition for sid, clone in clones.items()}
     return PreparedPage(texts, graphics, info, clones, paste_assets,
                         presenter.pointers, presenter.bubbles, presenter.boxes,
-                        frame_ids, presenter, text_steps, shape_keys, clone_keys)
+                        frame_ids, presenter, text_steps, shape_keys, clone_keys, traces)
 
 
 
@@ -430,6 +437,7 @@ def page_stream(prepared, W, H, helpers, metrics):
     path_parts = split_path_sequence(ordered_ids)
     graphic_shapes, text_shapes = graphics, texts
     native_shapes = {**graphics, **texts}
+    tracing = prepared.traces is not None
 
     def show_shape(sid, visible=True, clone=False):
         if prepared.presenter is not None:
@@ -442,8 +450,16 @@ def page_stream(prepared, W, H, helpers, metrics):
     metrics.update(partition_count=WORKER_COUNT,
                    partition_sizes=[len(part) for part in path_parts],
                    max_active_workers=0)
+    if tracing:
+        metrics.update(traced_graphics=0, path_trace_frames=0, untraced_graphics=0)
+        trace_stride = max(12, min(W, H) / 34)
     drawn, active_kind = set(), {}
     parallel_text_frames = parallel_frames = 0
+
+    def reveal_graphic(sid):
+        # A text-bearing frame keeps its hidden-text clone until typing ends.
+        show_shape(sid, clone=sid in clones)
+        drawn.add(sid)
 
     def motion(i, tx, ty, steps=2):
         c = pointers[i]
@@ -491,20 +507,46 @@ def page_stream(prepared, W, H, helpers, metrics):
             else:
                 c.Left = max(0, min(W - 16, x + sw / 2))
                 c.Top = max(0, min(H - 22, y + sh / 2))
-            # A text-bearing frame uses its existing text-hidden clone until typing ends.
-            if sid in clones:
-                show_shape(sid, clone=True)
-            else:
-                show_shape(sid)
-            drawn.add(sid)
+            reveal_graphic(sid)
             yield
         active_kind.pop(i, None)
         bubble.Visible = 0
+
+    def trace_worker(i, sid):
+        cursor, box = pointers[i], boxes[i]
+        trace = prepared.traces.get(sid)
+        if trace is None:
+            cursor.Visible = 0
+            metrics["untraced_graphics"] += 1
+            reveal_graphic(sid)
+            yield
+            return
+        active_kind[i] = "graphic"
+        left, top, right, bottom = trace.bounds
+        box.Left, box.Top = max(0, left), max(0, top)
+        box.Width, box.Height = min(W, right) - box.Left, min(H, bottom) - box.Top
+        if box.Width >= 12 and box.Height >= 8 and box.Width * box.Height < W * H * 0.9:
+            box.Visible = -1
+        steps = max(2, min(26, math.ceil(trace.length / trace_stride)))
+        for step in range(steps + 1):
+            tip, outline = trace.at(step / steps)
+            cursor.Left, cursor.Top = tip
+            cursor.Visible = -1
+            prepared.presenter.trace_paths[i] = outline
+            metrics["path_trace_frames"] += 1
+            yield
+        box.Visible = 0
+        prepared.presenter.trace_paths[i] = ()
+        metrics["traced_graphics"] += 1
+        reveal_graphic(sid)
+        active_kind.pop(i, None)
 
     def text_worker(i, queue):
         c = pointers[i]
         b = bubbles[i]
         for sid in queue:
+            if tracing:
+                c.Visible = 0
             # Wait for overlapping background graphics to avoid text appearing on an absent card.
             x, y, sw, sh, z, full = info[sid]
             parents = [
@@ -554,11 +596,15 @@ def page_stream(prepared, W, H, helpers, metrics):
     def path_worker(i, part):
         if not part:
             return
-        pointers[i].Visible = -1
-        yield
+        if not tracing:
+            pointers[i].Visible = -1
+            yield
         for sid in part:
             if sid in graphic_shapes:
-                yield from graphic_worker(i, [sid])
+                if tracing:
+                    yield from trace_worker(i, sid)
+                else:
+                    yield from graphic_worker(i, [sid])
             if sid in text_shapes:
                 yield from text_worker(i, [sid])
         pointers[i].Visible = 0
@@ -594,6 +640,9 @@ def run(manifest):
 
     manifest = Path(manifest).resolve()
     state = json.loads(manifest.read_text(encoding="utf-8-sig"))
+    mode = state.get("mode", "drag")
+    if mode not in ("drag", "trace"):
+        raise ValueError(f"Unknown playback mode {mode}")
     copy, source = Path(state["copy"]).resolve(), Path(state["source"]).resolve()
     if (
         copy.parent != manifest.parent
@@ -603,6 +652,10 @@ def run(manifest):
         raise ValueError("Invalid isolated preview copy")
     original_hash = sha256(source.read_bytes()).hexdigest()
     expected = content_signature(copy)
+    traces = None
+    if mode == "trace":
+        from path_trace import load_traces
+        traces = load_traces(copy)
     helpers = {}
     metrics = {}
     app = deck = None
@@ -626,7 +679,8 @@ def run(manifest):
                 metrics[page] = {}
                 prepared[page] = prepare_page(
                     slides[page], pending[page], width, height, helpers[page],
-                    set(state["frame_ids"].get(page, []))
+                    set(state["frame_ids"].get(page, [])),
+                    traces=traces.get(page, {}) if traces is not None else None,
                 )
                 presenters.append(prepared[page].presenter)
             window = deck.NewWindow()
@@ -651,6 +705,7 @@ def run(manifest):
                 "hwnd": preview_hwnd,
                 "pid": win32process.GetWindowThreadProcessId(preview_hwnd)[1],
                 "copy": str(copy), "fullscreen": fullscreen,
+                "mode": mode,
                 "start_file": str(start_file) if start_file else None,
             }), encoding="utf-8")
             request_preview_foreground(window, win32gui, preview_hwnd)
@@ -681,6 +736,11 @@ def run(manifest):
                     time.sleep(0.1)
                     continue
                 if waiting:
+                    if fullscreen:
+                        # Desktop activation can restore the previous window size.
+                        configure_preview_window(app, window, True)
+                        if not preview_has_focus(win32gui, preview_hwnd):
+                            continue
                     print("ELEMENT_PLAYBACK_FOREGROUND_READY", flush=True)
                     waiting = False
                 if not view_fitted:
@@ -765,7 +825,7 @@ def run(manifest):
             print("ELEMENT_PLAYBACK_WORKER_FINISHED", flush=True)
             completed = True
             print(f"PATH_PLAYBACK_OK|objects={sum(len(ids) for ids in state['targets'].values())}"
-                  f"|seconds={time.monotonic() - started:.3f}|file={copy}|mode=drag", flush=True)
+                  f"|seconds={time.monotonic() - started:.3f}|file={copy}|mode={mode}", flush=True)
         finally:
             # Failed previews stay recoverable; never leave simulated cursors in saved output.
             if deck is not None:

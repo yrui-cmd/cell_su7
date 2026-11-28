@@ -5,10 +5,13 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE
-from pptx.util import Inches
+from pptx.oxml import parse_xml
+from pptx.oxml.ns import nsdecls, qn
+from pptx.util import Inches, Pt
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 if not (SKILL_ROOT / 'scripts/ppt_swarm_playback.py').is_file():
@@ -20,6 +23,7 @@ playback = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = playback
 SPEC.loader.exec_module(playback)
 from prepare_path_playback import prepare
+from path_trace import PathTrace, drawable_trace
 
 
 class GraphicDragTests(unittest.TestCase):
@@ -38,8 +42,11 @@ class GraphicDragTests(unittest.TestCase):
             self.assertEqual(state['job_id'], SKILL_ROOT.name.replace('_', '-'))
             self.assertTrue(state['fullscreen'])
             self.assertTrue(state['wait_for_start'])
+            self.assertEqual(state['mode'], 'drag')
             self.assertEqual(source.read_bytes(), original)
             self.assertEqual(sum(map(len, state['targets'].values())), 1)
+            traced = playback.prepare_manifest(source, Path(folder) / 'trace.pptx', mode='trace')
+            self.assertEqual(json.loads(traced.read_text())['mode'], 'trace')
 
     def test_fullscreen_startup_is_idempotent_and_fits_after_layout(self):
         events = []
@@ -157,6 +164,60 @@ class GraphicDragTests(unittest.TestCase):
         self.assertEqual(metrics['partition_sizes'], [5] * 12)
         self.assertEqual(metrics['max_active_workers'], 12)
 
+    def test_trace_uses_native_curve_coordinates_and_separate_contours(self):
+        deck = Presentation()
+        slide = deck.slides.add_slide(deck.slide_layouts[6])
+        shape = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Pt(100), Pt(70), Pt(120), Pt(60))
+        props = shape._element.find(qn('p:spPr'))
+        preset = props.find(qn('a:prstGeom'))
+        props.replace(preset, parse_xml(f'<a:custGeom {nsdecls("a")}><a:pathLst>'
+                                        '<a:path w="12" h="6"><a:moveTo><a:pt x="0" y="0"/></a:moveTo>'
+                                        '<a:cubicBezTo><a:pt x="0" y="6"/><a:pt x="12" y="6"/>'
+                                        '<a:pt x="12" y="0"/></a:cubicBezTo></a:path>'
+                                        '</a:pathLst></a:custGeom>'))
+        trace = drawable_trace(shape)
+        self.assertEqual(trace.at(0), ((100, 70), (((100, 70),),)))
+        tip, outline = trace.at(0.5)
+        self.assertAlmostEqual(tip[0], 160)
+        self.assertAlmostEqual(tip[1], 115)
+        self.assertEqual(outline[-1][-1], tip)
+        self.assertEqual(trace.at(1)[0], (220, 70))
+        disconnected = PathTrace((((10, 30), (14, 30)), ((71, 54), (77, 54))))
+        self.assertEqual(disconnected.at(0.4), ((71, 54), (((10, 30), (14, 30)), ((71, 54),))))
+
+    def test_trace_workers_show_at_path_starts_and_reveal_after_tracing(self):
+        graphics = {sid: SimpleNamespace(Visible=0) for sid in range(1, 13)}
+        info = {sid: (30, 30, 40, 30, sid, '') for sid in graphics}
+        paths = {sid: PathTrace((((sid * 17, 80), (sid * 17 + 12, 80), (sid * 17 + 12, 92)),))
+                 for sid in graphics}
+        pointers = [SimpleNamespace(Left=0, Top=0, Visible=0) for _ in graphics]
+        boxes = [SimpleNamespace(Visible=0) for _ in graphics]
+        bubbles = [SimpleNamespace(Visible=0) for _ in graphics]
+        shown = []
+        presenter = SimpleNamespace(trace_paths=[()] * 12, show=lambda key, visible: shown.append(key),
+                                    publish=lambda: None)
+        prepared = playback.PreparedPage({}, graphics, info, {}, set(), pointers, bubbles, boxes, set(),
+                                         presenter=presenter, shape_keys={sid: sid for sid in graphics},
+                                         traces=paths)
+        stats = {}
+        frames = playback.page_stream(prepared, 400, 300, [], stats)
+        next(frames)
+        self.assertEqual(shown, [])
+        for cursor, outline, trace in zip(pointers, presenter.trace_paths, paths.values()):
+            self.assertEqual((cursor.Left, cursor.Top), trace.at(0)[0])
+            self.assertEqual(outline, trace.at(0)[1])
+        next(frames)
+        self.assertEqual(shown, [])
+        for cursor, outline in zip(pointers, presenter.trace_paths):
+            self.assertEqual((cursor.Left, cursor.Top), outline[-1][-1])
+        for _ in frames:
+            pass
+        self.assertEqual(shown, list(graphics))
+        self.assertEqual(stats['max_active_workers'], 12)
+        self.assertEqual(stats['traced_graphics'], 12)
+        self.assertFalse(any(p.Visible for p in pointers))
+        self.assertFalse(any(presenter.trace_paths))
+
     def test_finished_pointer_disappears_while_other_segments_continue(self):
         graphics = {index: SimpleNamespace(Id=index, Visible=0) for index in range(1, 25)}
         info = {index: (index * 10, 20, 20, 20, index, '') for index in graphics}
@@ -202,6 +263,33 @@ class GraphicDragTests(unittest.TestCase):
                 self.assertEqual(image.getpixel(sample)[3], 0)
         finally:
             overlay.close()
+
+    def test_numbered_badge_fits_at_edge_and_trail_exits_with_pointer(self):
+        shape = SimpleNamespace(Name='', Line=SimpleNamespace(Visible=0), Visible=0,
+                                Fill=SimpleNamespace(UserPicture=lambda path: None))
+        slide = SimpleNamespace(Shapes=SimpleNamespace(
+            AddShape=lambda *args: shape,
+            Range=lambda names: None))
+        with patch('cursor_overlay.time.perf_counter', side_effect=(0.0, 0.02, 0.06, 0.09)):
+            overlay = playback.CursorOverlay(slide, 400, 300, playback.COLORS[:1])
+            try:
+                pointer = overlay.pointers[0]
+                pointer.Left, pointer.Top, pointer.Visible = 383, 279, -1
+                overlay.publish()
+                # At the bottom right the full numbered badge must sit above and left.
+                x, y = overlay.last_snapshot[0][0]
+                left, top, _, _ = overlay.image.getbbox()
+                self.assertLess(left, x - overlay.badges[0].width)
+                self.assertLess(top, y - overlay.badges[0].height)
+                pointer.Left = 315
+                overlay.publish()
+                self.assertTrue(overlay.last_snapshot[0][1])
+                pointer.Visible = 0
+                overlay.publish()
+                self.assertIsNone(overlay.image.getbbox())
+                self.assertFalse(overlay.histories[0])
+            finally:
+                overlay.close()
 
     def test_text_box_and_text_bearing_frame_are_distinguished(self):
         deck = Presentation()

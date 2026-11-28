@@ -12,11 +12,18 @@ Verify: no raster media, all expected native text, preserved contour counts, cor
 
 ## Native reconstruction playback on Windows
 
-After preparing the complete editable deck, run `scripts/run_ppt_path_playback.ps1 -InputPptx <prepared.pptx> -OutputPptx <new-unique-name.pptx>`. The default `Drag` mode uses 12 contiguous, nearly equal slices of the original path/object sequence, each advanced by its own pointer. Do not substitute spatial grid regions or send every pointer through the same sequence. Frames expand with width/height cues before revealing their native contents; lettering appears character by character. Each pointer and its cues disappear immediately when that slice finishes. Cursor visuals share one temporary overlay, reveals are batched per frame, and glyph operations are cached before playing.
+After preparing the editable deck, run `scripts/run_ppt_path_playback.ps1 -InputPptx <prepared.pptx> -OutputPptx <new-unique-name.pptx>`. Choose a mode per replay.
+
+| 展示方式 | 参数 | 画面 |
+| --- | --- | --- |
+| 快速描摹（默认） | `-Mode Drag` | Expanding drag boxes reveal the finished graphics. |
+| 细节描摹 | `-Mode Trace` | The arrow starts on the native contour and the partial stroke extends to its tip. The finished graphic replaces the temporary outline. |
+
+Both modes split the source path/object sequence into 12 contiguous slices. Each pointer progresses independently in source order and disappears when its slice finishes. Text appears character by character. Separate contours keep their own starts and strokes in 细节描摹. Objects without a supported contour are revealed in source order. Cursor visuals share a temporary overlay, native reveals are batched, and glyph operations are cached.
 
 The default startup opens the prepared copy, maximizes both the PowerPoint application and document, enables the editor's full-screen ribbon state, fits the slide, and requests foreground activation once. `HideRibbon` is a toggle: query `GetPressedMso` before executing it so replay does not turn full screen off. Fit after the ribbon and window layout change, then freeze the scale during drawing. Keep `ppViewSlide` editor view for live native mutations. F5 slide-show playback is not the verified reconstruction route. `-Windowed` skips the full-screen request; `-Mode Visibility` selects the previous simple visibility-only route.
 
-If `ELEMENT_PLAYBACK_WAITING_FOR_FOREGROUND` appears, use the computer-use skill to locate and activate the exact preview window. Read `<output-directory>/window-ready.json` for the copy path, run ID and HWND; select the corresponding window from the desktop inventory. Do not activate an unrelated user deck. A later user window switch pauses playback until this preview returns to the foreground.
+If `ELEMENT_PLAYBACK_WAITING_FOR_FOREGROUND` appears, use the computer-use skill to locate and activate the exact preview window. Read `<output-directory>/window-ready.json` for the copy path, run ID and HWND; select the corresponding window from the desktop inventory. Do not activate an unrelated user deck. A later user window switch pauses playback. When this preview returns to the foreground, the full-screen mode restores the fitted slide layout before playback resumes.
 
 For a setup or recording that must be checked before the first frame, add `-WaitForStart`. Once `ELEMENT_PLAYBACK_WAITING_FOR_START` appears, inspect and foreground the full-screen blank canvas, then create the exact `start_file` named in `window-ready.json`. Its name includes the run ID, so an old start signal cannot release a new run. This optional gate times out after 15 minutes; `playback.cancel` in the output directory stops the run. After release, the player refits the slide once before its first frame. Use a fresh output directory when using cancellation or the legacy recording gate.
 
