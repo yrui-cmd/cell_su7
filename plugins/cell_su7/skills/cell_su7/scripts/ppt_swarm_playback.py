@@ -14,6 +14,8 @@ from pptx import Presentation
 from typing import NamedTuple
 
 from cursor_overlay import CursorOverlay
+from path_speed import TracePacer, display_scale, trace_speed
+from path_trace import contour_prefix
 
 SKILL_ID = Path(__file__).resolve().parents[1].name.replace("_", "-")
 COLORS = [
@@ -184,13 +186,17 @@ def is_frame_shape(shape):
     return horizontal and vertical
 
 
-def prepare_manifest(source, destination, *, fullscreen=True, wait_for_start=False, mode="drag"):
+def prepare_manifest(source, destination, *, fullscreen=True, wait_for_start=False,
+                     mode="drag", max_cursor_cm_per_second=None):
     import uuid
     from prepare_path_playback import prepare
 
     source, destination = Path(source).resolve(), Path(destination).resolve()
     if mode not in ("drag", "trace"):
         raise ValueError(f"Unknown playback mode {mode}")
+    if mode != "trace" and max_cursor_cm_per_second is not None:
+        raise ValueError("The cursor speed limit is available in Trace mode")
+    limit = trace_speed(max_cursor_cm_per_second) if mode == "trace" else None
     # Check dependencies before staging a hidden file or opening PowerPoint.
     import win32com.client
     import pypinyin
@@ -213,6 +219,8 @@ def prepare_manifest(source, destination, *, fullscreen=True, wait_for_start=Fal
         "targets": targets, "frame_ids": frames,
         "fullscreen": bool(fullscreen), "wait_for_start": bool(wait_for_start), "mode": mode,
     }
+    if limit is not None:
+        state["max_cursor_cm_per_second"] = limit
     manifest = destination.with_suffix(".playback.json")
     manifest.write_text(json.dumps(state, indent=2), encoding="utf-8")
     return manifest
@@ -226,14 +234,20 @@ def main():
     parser.add_argument("--output-pptx", required=True, type=Path)
     parser.add_argument("--mode", choices=("drag", "trace"), default="drag",
                         help="Expand frames or follow the native vector contours")
+    parser.add_argument("--max-cursor-cm-per-second", type=trace_speed,
+                        help="Trace cursor speed ceiling, greater than 0 and at most 3 cm/s (default 3)")
     parser.add_argument("--windowed", action="store_true",
                         help="Use the current editor layout without requesting full screen")
     parser.add_argument("--wait-for-start", action="store_true",
                         help="Prepare the view, then wait for the start file in window-ready.json")
     args = parser.parse_args()
-    return run(prepare_manifest(args.input_pptx, args.output_pptx,
-                                fullscreen=not args.windowed,
-                                wait_for_start=args.wait_for_start, mode=args.mode))
+    if args.max_cursor_cm_per_second is not None and args.mode != "trace":
+        parser.error("--max-cursor-cm-per-second requires --mode trace")
+    return run(prepare_manifest(
+        args.input_pptx, args.output_pptx, fullscreen=not args.windowed,
+        wait_for_start=args.wait_for_start, mode=args.mode,
+        max_cursor_cm_per_second=args.max_cursor_cm_per_second,
+    ))
 
 
 BUSY_ERRORS = {-2147418111, -2147417846}
@@ -430,7 +444,7 @@ def prepare_page(slide, shapes, W, H, helpers, frame_ids, *, traces=None):
 
 
 
-def page_stream(prepared, W, H, helpers, metrics):
+def page_stream(prepared, W, H, helpers, metrics, *, pacer=None):
     texts, graphics, info, clones, paste_assets, pointers, bubbles, boxes, frame_ids = prepared[:9]
     graphic_ids = sorted(graphics, key=lambda sid: info[sid][4])
     ordered_ids = sorted(info, key=lambda sid: info[sid][4])
@@ -512,6 +526,22 @@ def page_stream(prepared, W, H, helpers, metrics):
         active_kind.pop(i, None)
         bubble.Visible = 0
 
+    def trace_samples(trace, i, cursor):
+        if pacer is None:
+            steps = max(2, min(26, math.ceil(trace.length / trace_stride)))
+            for step in range(steps + 1):
+                yield trace.at(step / steps)
+            return
+        for index, (points, offsets) in enumerate(zip(trace.outlines, trace.distances)):
+            yield from pacer.relocate(i, cursor, points[0])
+            distance = 0.0
+            while True:
+                tip, prefix = contour_prefix(points, offsets, distance)
+                yield tip, trace.outlines[:index] + (prefix,)
+                if distance == offsets[-1]:
+                    break
+                distance = min(offsets[-1], distance + pacer.step_points)
+
     def trace_worker(i, sid):
         cursor, box = pointers[i], boxes[i]
         trace = prepared.traces.get(sid)
@@ -527,13 +557,13 @@ def page_stream(prepared, W, H, helpers, metrics):
         box.Width, box.Height = min(W, right) - box.Left, min(H, bottom) - box.Top
         if box.Width >= 12 and box.Height >= 8 and box.Width * box.Height < W * H * 0.9:
             box.Visible = -1
-        steps = max(2, min(26, math.ceil(trace.length / trace_stride)))
-        for step in range(steps + 1):
-            tip, outline = trace.at(step / steps)
-            cursor.Left, cursor.Top = tip
-            cursor.Visible = -1
-            prepared.presenter.trace_paths[i] = outline
-            metrics["path_trace_frames"] += 1
+        for sample in trace_samples(trace, i, cursor):
+            if sample is not None:
+                tip, outline = sample
+                cursor.Left, cursor.Top = tip
+                cursor.Visible = -1
+                prepared.presenter.trace_paths[i] = outline
+                metrics["path_trace_frames"] += 1
             yield
         box.Visible = 0
         prepared.presenter.trace_paths[i] = ()
@@ -568,14 +598,21 @@ def page_stream(prepared, W, H, helpers, metrics):
                 active_kind[i] = "waiting"
                 yield
             active_kind[i] = "text"
-            yield from motion(i, x, y, steps=1)
+            if pacer is None:
+                yield from motion(i, x, y, steps=1)
+            else:
+                start = (max(0, min(W - 16, x)), max(0, min(H - 22, y)))
+                yield from pacer.relocate(i, c, start)
+                yield
             show_shape(sid, clone=True)
             bubble_range = b.TextFrame.TextRange
             for ch, py, x, y, fill, transparency_id in prepared.text_steps[sid]:
                 cx = max(0, min(W - 18, x))
                 cy = max(0, min(H - 24, y))
-                c.Left = cx
-                c.Top = cy
+                if pacer is None:
+                    c.Left, c.Top = cx, cy
+                else:
+                    yield from pacer.move(c, (cx, cy))
                 if "\u4e00" <= ch <= "\u9fff":
                     b.Left = max(0, min(W - 88, cx))
                     b.Top = max(0, min(H - 24, cy + 24))
@@ -621,7 +658,10 @@ def page_stream(prepared, W, H, helpers, metrics):
         if sum(v == "text" for v in active_kind.values()) > 1:
             parallel_text_frames += 1
         if prepared.presenter is not None:
-            prepared.presenter.publish()
+            if pacer is None:
+                prepared.presenter.publish()
+            else:
+                prepared.presenter.publish(pacer)
         yield
     # Hide only here. Delete in one final cleanup, never during typing.
     for helper in helpers:
@@ -630,6 +670,10 @@ def page_stream(prepared, W, H, helpers, metrics):
     metrics.update(
         parallel_frames=parallel_frames, parallel_text_frames=parallel_text_frames
     )
+    if pacer is not None:
+        metrics.update(cursor_speed_limit_cm_per_second=pacer.speed_cm,
+                       peak_cursor_cm_per_second=round(pacer.peak_cm, 5),
+                       cursor_speed_calibration=pacer.scale.basis)
 
 
 def run(manifest):
@@ -643,6 +687,7 @@ def run(manifest):
     mode = state.get("mode", "drag")
     if mode not in ("drag", "trace"):
         raise ValueError(f"Unknown playback mode {mode}")
+    limit = trace_speed(state.get("max_cursor_cm_per_second")) if mode == "trace" else None
     copy, source = Path(state["copy"]).resolve(), Path(state["source"]).resolve()
     if (
         copy.parent != manifest.parent
@@ -718,14 +763,16 @@ def run(manifest):
             if state.get("recording_gate"):
                 wait_for_start(manifest.parent / "recording.started",
                                manifest.parent / "playback.cancel")
-            streams = {}
+            streams, pacers = {}, {}
+            calibrated_scale = speed_layout = None
             render_samples = {}
             started = time.monotonic()
             waiting = False
             view_fitted = False
             last_view_check = 0.0
-            slide = window.View.Slide
             active = window
+            view = active.View
+            slide = view.Slide
             while pending:
                 if (manifest.parent / "playback.cancel").exists():
                     raise RuntimeError("Playback cancelled")
@@ -743,6 +790,8 @@ def run(manifest):
                             continue
                     print("ELEMENT_PLAYBACK_FOREGROUND_READY", flush=True)
                     waiting = False
+                    speed_layout = None
+                    last_view_check = 0.0
                 if not view_fitted:
                     # A gated desktop setup may have changed the available canvas.
                     fit_preview(window)
@@ -750,19 +799,35 @@ def run(manifest):
                     if not preview_has_focus(win32gui, preview_hwnd):
                         continue
                 if time.monotonic() - last_view_check > 0.25:
-                    slide = active.View.Slide
+                    view = active.View
+                    slide = view.Slide
                     last_view_check = time.monotonic()
+                if limit is not None:
+                    layout = (win32gui.GetWindowRect(preview_hwnd), view.Zoom)
+                    if layout != speed_layout:
+                        calibrated_scale = display_scale(active, preview_hwnd)
+                        speed_layout = layout
+                        for pacer in pacers.values():
+                            pacer.scale = calibrated_scale
+                        print("ELEMENT_PLAYBACK_CURSOR_SCALE|" + json.dumps({
+                            "basis": calibrated_scale.basis,
+                            "mm_per_point": calibrated_scale.mm_per_point,
+                            "limit_cm_per_second": limit,
+                        }), flush=True)
                 page = str(slide.SlideID)
                 if page not in pending:
                     time.sleep(0.1)
                     continue
                 if page not in streams:
+                    if limit is not None:
+                        pacers[page] = TracePacer(limit, calibrated_scale, prepared[page].presenter.scale)
                     streams[page] = page_stream(
                         prepared[page],
                         width,
                         height,
                         helpers[page],
                         metrics[page],
+                        pacer=pacers.get(page),
                     )
                     print(
                         f"ELEMENT_PLAYBACK_PAGE_BEGIN|{slide.SlideIndex}|{int((time.monotonic()-started)*1000)}",

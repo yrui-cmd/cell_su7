@@ -23,7 +23,7 @@ PPT now defaults to fast native OOXML on both OSes, preserving compound holes. I
 ## Choose a Windows PowerPoint playback mode
 
 - **Quick tracing (快速描摹)** (`-Mode Drag`, default). Pointers expand drag frames to reveal the graphics.
-- **Detailed tracing (细节描摹)** (`-Mode Trace`). Pointers start on the native contours and the visible outline extends at each tip.
+- **Detailed tracing (细节描摹)** (`-Mode Trace`). Pointers start on the native contours and the visible outline extends at each tip. Each pointer is capped at 3 cm/s in the current display. For a slower pace, pass `-MaxCursorCmPerSecond 2`.
 
 Choose a mode when asking Codex to replay an editable deck, or pass the flag to `run_ppt_path_playback.ps1`. Both modes advance 12 contiguous source-order slices in parallel, reveal editable text character by character, and hide each completed pointer. [Playback guide](plugins/cell_su7/skills/cell_su7/references/powerpoint-workflow.md)
 

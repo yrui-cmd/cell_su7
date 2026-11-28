@@ -8,6 +8,19 @@ from pptx.oxml.ns import qn
 from pptx.util import Pt
 
 
+def contour_prefix(points, offsets, distance):
+    """Sample one continuous contour, keeping its partial stroke separate."""
+    distance = max(0.0, min(distance, offsets[-1]))
+    end = bisect_right(offsets, distance)
+    prefix = points[:end]
+    tip = prefix[-1]
+    if end < len(points) and distance > offsets[end - 1]:
+        ratio = (distance - offsets[end - 1]) / (offsets[end] - offsets[end - 1])
+        tip = tuple(a + (b - a) * ratio for a, b in zip(tip, points[end]))
+        prefix += (tip,)
+    return tip, prefix
+
+
 class PathTrace:
     def __init__(self, contours):
         outlines, distances, ends = [], [], []
@@ -41,14 +54,7 @@ class PathTrace:
         distance = min(1.0, max(0.0, fraction)) * self.length
         index = min(bisect_right(self.ends, distance), len(self.ends) - 1)
         local = distance - (self.ends[index - 1] if index else 0.0)
-        points, offsets = self.outlines[index], self.distances[index]
-        end = bisect_right(offsets, local)
-        prefix = points[:end]
-        tip = prefix[-1]
-        if end < len(points) and local > offsets[end - 1]:
-            ratio = (local - offsets[end - 1]) / (offsets[end] - offsets[end - 1])
-            tip = tuple(a + (b - a) * ratio for a, b in zip(tip, points[end]))
-            prefix += (tip,)
+        tip, prefix = contour_prefix(self.outlines[index], self.distances[index], local)
         return tip, self.outlines[:index] + (prefix,)
 
 

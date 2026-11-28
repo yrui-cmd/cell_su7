@@ -179,7 +179,7 @@ class CursorOverlay:
             y -= sprite.height - 1 if flip_y else 0
         self.image.alpha_composite(sprite, (x, y))
 
-    def publish(self):
+    def publish(self, pacer=None):
         for visible in (False, True):
             names = tuple(name for name, value in self.pending_visibility.items() if value == visible)
             if names:
@@ -198,7 +198,7 @@ class CursorOverlay:
                     selection = (box.Left, box.Top, box.Left + box.Width, box.Top + box.Height)
                 if bubble.Visible:
                     hint = (bubble.Left, bubble.Top, bubble.TextFrame.TextRange.Text)
-            outline = self.trace_paths[index] if self.pointers[index].Visible else ()
+            outline = self.trace_paths[index]
             snapshot.append((point, trail, selection, hint, outline))
         self.last_time = now
         if snapshot == self.last_snapshot:
@@ -233,9 +233,14 @@ class CursorOverlay:
                 self.draw_arrow(index, point)
         path = Path(self.directory.name) / f'frame-{self.frame:06d}.png'
         self.image.save(path, compress_level=1)
+        if pacer is not None:
+            points = [item[0] for item in snapshot]
+            pacer.before_display(points)
         self.set_picture(str(path))
         if self.frame == 0:
             self.shape.Visible = -1
+        if pacer is not None:
+            pacer.displayed(points)
         self.last_snapshot = snapshot
         self.frame += 1
 

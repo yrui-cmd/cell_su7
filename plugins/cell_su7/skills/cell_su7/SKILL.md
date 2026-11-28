@@ -34,7 +34,7 @@ Check that the recognition input preserves the full canvas aspect ratio, layout 
 On Windows PowerPoint, prepare the complete native editable PPTX first. For playback, run `scripts/run_ppt_path_playback.ps1 -InputPptx <prepared.pptx> -OutputPptx <new-playback.pptx>` against that deck and write to a unique output copy. Use `-Mode Drag` when the user asks for 快速描摹 or the first display. Use `-Mode Trace` when the user asks for 细节描摹 or the second display. If the user wants to choose, offer those two named options. Without a choice, 快速描摹 is the default.
 
 - **快速描摹** (`-Mode Drag`) expands a drag box on frames, pictures and groups before revealing their native content. Text-bearing frames expand before their text appears.
-- **细节描摹** (`-Mode Trace`) starts each pointer on a native contour and draws the outline at its tip. The full native graphic appears when its contour finishes.
+- **细节描摹** (`-Mode Trace`) starts each pointer on a native contour and draws the outline at its tip. The full native graphic appears when its contour finishes. Each pointer has a default ceiling of 3 cm/s on the displayed preview. Use `-MaxCursorCmPerSecond` for a lower positive limit, for example `-MaxCursorCmPerSecond 2`. Each pointer hides while transferring between disconnected contours.
 
 Both modes split the original path/object sequence into 12 contiguous segments and advance them together. Pointers and their cues disappear as their segments finish. Text appears character by character with Chinese pinyin hints. Cursors share one temporary overlay, native reveals are batched, and glyph commands are cached. Windows playback requires `python-pptx`, `Pillow`, `pypinyin`, `pywin32`.
 

@@ -4,10 +4,14 @@ param(
     [Parameter(Mandatory=$true)][string]$InputPptx,
     [Parameter(Mandatory=$true)][string]$OutputPptx,
     [ValidateSet('Drag','Trace','Visibility')][string]$Mode = 'Drag',
+    [ValidateScript({ $_ -gt 0 -and $_ -le 3.0 })][double]$MaxCursorCmPerSecond = 3.0,
     [switch]$Windowed,
     [switch]$WaitForStart
 )
 $ErrorActionPreference='Stop'
+if ($Mode -ne 'Trace' -and $PSBoundParameters.ContainsKey('MaxCursorCmPerSecond')) {
+    throw 'MaxCursorCmPerSecond requires Trace mode'
+}
 $inputPath=(Resolve-Path -LiteralPath $InputPptx).Path
 $outputPath=[IO.Path]::GetFullPath($OutputPptx)
 $python=Get-Command py -ErrorAction SilentlyContinue
@@ -15,6 +19,9 @@ $prefix=@('-3','-X','utf8')
 if (-not $python) { $python=Get-Command python -ErrorAction Stop; $prefix=@('-X','utf8') }
 if ($Mode -ne 'Visibility') {
     $playbackArgs=@('--input-pptx',$inputPath,'--output-pptx',$outputPath,'--mode',$Mode.ToLowerInvariant())
+    if ($Mode -eq 'Trace') {
+        $playbackArgs += @('--max-cursor-cm-per-second', $MaxCursorCmPerSecond.ToString([Globalization.CultureInfo]::InvariantCulture))
+    }
     if ($Windowed) { $playbackArgs += '--windowed' }
     if ($WaitForStart) { $playbackArgs += '--wait-for-start' }
     & $python.Source @prefix (Join-Path $PSScriptRoot 'ppt_swarm_playback.py') @playbackArgs

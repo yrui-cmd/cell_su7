@@ -82,6 +82,8 @@ python plugins/cell_su7/skills/cell_su7/scripts/run_from_image.py --input-image 
 | **快速描摹**（默认） | 框线随光标展开，再显示对应的原生图形。 | `-Mode Drag` |
 | **细节描摹** | 光标从实际轮廓起点出现，笔尖沿路径移动，经过的线条逐段显出。 | `-Mode Trace` |
 
+细节描摹按当前屏幕尺寸和 PowerPoint 缩放计算距离，每个光标默认最多移动 **3 厘米/秒**。跨路径时光标先隐藏，已描过的线条继续显示。想更慢时可加 `-MaxCursorCmPerSecond 2`，也可以直接说“用细节描摹，每秒最多 2 厘米”。
+
 可以告诉 Codex“用快速描摹重画这张图”或“用细节描摹重画这张图”。同一份可编辑 PPTX 可以分别用两种方式重播。
 
 ```powershell

@@ -1,3 +1,10 @@
+# 0.4.11 — speed-limited detailed tracing
+
+- Cap each detailed-tracing cursor at 3 cm/s in the fitted PowerPoint preview.
+- Calibrate using the current Windows display and PowerPoint zoom, with a nominal fallback when physical dimensions are unavailable.
+- Hide the cursor while transferring between disconnected contours, and keep the already traced lines visible.
+- Support a lower per-cursor limit through the PowerShell launcher and Python CLI.
+
 # 0.4.10 — selectable PowerPoint tracing
 
 - Add 快速描摹 (quick tracing, `-Mode Drag`) and 细节描摹 (detailed tracing, `-Mode Trace`) as selectable display modes.

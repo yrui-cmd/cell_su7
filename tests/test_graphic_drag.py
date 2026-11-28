@@ -1,5 +1,6 @@
 """Regression checks for graphic dragging in the native Cell preview."""
 import importlib.util
+import math
 import sys
 import unittest
 from pathlib import Path
@@ -24,6 +25,7 @@ sys.modules[SPEC.name] = playback
 SPEC.loader.exec_module(playback)
 from prepare_path_playback import prepare
 from path_trace import PathTrace, drawable_trace
+from path_speed import DisplayScale, TracePacer, trace_speed
 
 
 class GraphicDragTests(unittest.TestCase):
@@ -46,7 +48,13 @@ class GraphicDragTests(unittest.TestCase):
             self.assertEqual(source.read_bytes(), original)
             self.assertEqual(sum(map(len, state['targets'].values())), 1)
             traced = playback.prepare_manifest(source, Path(folder) / 'trace.pptx', mode='trace')
-            self.assertEqual(json.loads(traced.read_text())['mode'], 'trace')
+            trace_state = json.loads(traced.read_text())
+            self.assertEqual(trace_state['mode'], 'trace')
+            self.assertEqual(trace_state['max_cursor_cm_per_second'], 3.0)
+            self.assertNotIn('max_cursor_cm_per_second', state)
+            slower = playback.prepare_manifest(source, Path(folder) / 'slow.pptx',
+                                               mode='trace', max_cursor_cm_per_second=1.5)
+            self.assertEqual(json.loads(slower.read_text())['max_cursor_cm_per_second'], 1.5)
 
     def test_fullscreen_startup_is_idempotent_and_fits_after_layout(self):
         events = []
@@ -217,6 +225,69 @@ class GraphicDragTests(unittest.TestCase):
         self.assertEqual(stats['traced_graphics'], 12)
         self.assertFalse(any(p.Visible for p in pointers))
         self.assertFalse(any(presenter.trace_paths))
+
+    def test_trace_speed_accepts_only_a_positive_ceiling_up_to_three(self):
+        self.assertEqual(trace_speed(), 3.0)
+        self.assertEqual(trace_speed('1.5'), 1.5)
+        for invalid in (0, -1, 3.01, float('inf'), float('nan')):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                trace_speed(invalid)
+
+    def test_paced_trace_keeps_the_cap_during_contours_and_transfers(self):
+        first = PathTrace((((10, 20), (20, 20)), ((50, 20), (60, 20))))
+        second = PathTrace((((10, 80), (100, 80)),))
+        pointers = [SimpleNamespace(Left=0, Top=0, Visible=0) for _ in playback.COLORS]
+        boxes = [SimpleNamespace(Visible=0) for _ in playback.COLORS]
+        bubbles = [SimpleNamespace(Visible=0) for _ in playback.COLORS]
+        now = [0.0]
+        events = []
+        shown = []
+
+        def sleep(duration):
+            now[0] += duration
+
+        pacer = TracePacer(3, DisplayScale(1, 'test-display'), 1, clock=lambda: now[0], sleep=sleep)
+
+        def publish(rate):
+            points = [rate.overlay_point((p.Left, p.Top)) if p.Visible else None for p in pointers]
+            rate.before_display(points)
+            rate.displayed(points)
+            events.append((now[0], points, tuple(presenter.trace_paths)))
+
+        presenter = SimpleNamespace(trace_paths=[()] * 12, show=lambda key, visible: shown.append(key),
+                                    publish=publish)
+        info = {10: (10, 20, 50, 1, 1, ''), 20: (10, 80, 90, 1, 2, '')}
+        prepared = playback.PreparedPage({}, {10: object(), 20: object()}, info, {}, set(),
+                                         pointers, bubbles, boxes, set(), presenter=presenter,
+                                         shape_keys={10: 10, 20: 20}, traces={10: first, 20: second})
+        stats = {}
+        for _ in playback.page_stream(prepared, 300, 200, [], stats, pacer=pacer):
+            sleep(.02)
+        first_owner, second_owner = [i for i, part in enumerate(playback.split_path_sequence([10, 20]))
+                                     if part]
+        visible = [(stamp, points[first_owner]) for stamp, points, _ in events if points[first_owner]]
+        self.assertEqual(visible[0][1], (10, 20))
+        self.assertEqual(visible[-1][1], (60, 20))
+        for (t0, p0), (t1, p1) in zip(visible, visible[1:]):
+            self.assertLessEqual(math.dist(p0, p1), 30 * (t1 - t0) + 1e-8)
+        self.assertTrue(any(points[first_owner] is None and points[second_owner] is not None
+                            and outlines[first_owner] == (((10, 20), (20, 20)),)
+                            for _, points, outlines in events))
+        self.assertEqual(shown, [10, 20])
+        self.assertEqual(stats['cursor_speed_limit_cm_per_second'], 3)
+        self.assertLessEqual(stats['peak_cursor_cm_per_second'], 3.00001)
+        self.assertFalse(any(pointer.Visible for pointer in pointers))
+
+    def test_pacer_bounds_glyph_motion_and_allows_a_lower_speed(self):
+        pacer = TracePacer(1.5, DisplayScale(0.75, 'test-display'), 2)
+        cursor = SimpleNamespace(Left=0, Top=0)
+        points = [(0, 0)]
+        for _ in pacer.move(cursor, (9, 12)):
+            points.append((cursor.Left, cursor.Top))
+        points.append((cursor.Left, cursor.Top))
+        self.assertEqual(points[-1], (9, 12))
+        self.assertTrue(all(math.dist(a, b) <= pacer.step_points + 1e-8
+                            for a, b in zip(points, points[1:])))
 
     def test_finished_pointer_disappears_while_other_segments_continue(self):
         graphics = {index: SimpleNamespace(Id=index, Visible=0) for index in range(1, 25)}

@@ -58,7 +58,7 @@ $releaseManifest = [ordered]@{
 }
 $releaseManifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $stageRoot 'RELEASE-MANIFEST.json') -Encoding UTF8
 
-foreach ($required in @('README.md', 'install.py', 'setup.ps1', 'setup.sh', 'plugins\cell_su7\.codex-plugin\plugin.json', 'plugins\cell_su7\skills\cell_su7\SKILL.md', 'plugins\cell_su7\skills\cell_su7\scripts\run_cell_su7.py', 'plugins\cell_su7\skills\cell_no_ai\SKILL.md')) {
+foreach ($required in @('README.md', 'install.py', 'setup.ps1', 'setup.sh', 'plugins\cell_su7\.codex-plugin\plugin.json', 'plugins\cell_su7\skills\cell_su7\SKILL.md', 'plugins\cell_su7\skills\cell_su7\scripts\run_cell_su7.py', 'plugins\cell_su7\skills\cell_su7\scripts\path_speed.py', 'plugins\cell_su7\skills\cell_no_ai\SKILL.md')) {
     if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $required) -PathType Leaf)) { throw "Release stage is missing: $required" }
 }
 
